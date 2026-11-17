@@ -4,8 +4,13 @@
 (function () {
   'use strict';
   const RW = window.RW; const X = RW.UIExt = {};
-  X.isFs = () => !!document.fullscreenElement;
+  // У лаунчері повний екран нативний (Esc з нього не виходить); у браузері — Fullscreen API
+  const NAT = window.orravexNative; let natFs = false;
+  const setBtn = () => { const b = document.getElementById('fsbtn'); if (b) b.textContent = X.isFs() ? '🗗' : '⛶'; };
+  if (NAT) { NAT.onFullscreen(v => { natFs = v; setBtn(); }); NAT.isFullscreen().then(v => { natFs = v; setBtn(); }).catch(() => { }); }
+  X.isFs = () => NAT ? natFs : !!document.fullscreenElement;
   X.toggle = function () {
+    if (NAT) { NAT.toggleFullscreen().then(v => { natFs = v; setBtn(); }).catch(() => { }); return; }
     if (X.isFs()) { document.exitFullscreen && document.exitFullscreen(); return; }
     const el = document.documentElement;
     (el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : Promise.reject()).then(() => {

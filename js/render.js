@@ -379,7 +379,7 @@
       const bp = map.bp[i];
       if (bp && !seen.has(bp)) { seen.add(bp); drawBlueprint(bp, map); }
     }
-    for (const [i, t] of map.desig) { const x = i % map.w, y = (i / map.w) | 0; if (x < x0 || x > x1 || y < y0 || y > y1) continue; if (t === 'chop' && map.plant[i]) { drawDesig(x, y, 'chop'); } else if (t === 'mine') drawDesig(x, y, 'mine'); }
+    for (const [i, t] of map.desig) { const x = i % map.w, y = (i / map.w) | 0; if (x < x0 || x > x1 || y < y0 || y > y1) continue; if (t === 'chop' && map.plant[i]) { if (!D.plants[map.plant[i].def].tree) drawDesig(x, y, 'chop'); } else if (t === 'mine') drawDesig(x, y, 'mine'); }
     for (const b of map.buildings) { if (b.decon && b.x >= x0 - 2 && b.x <= x1 + 2 && b.y >= y0 - 2 && b.y <= y1 + 2) drawDesig(b.x, b.y, 'decon'); }
     // істоти
     for (const p of g.pawns) { if (p.x < x0 - 2 || p.x > x1 + 2 || p.y < y0 - 2 || p.y > y1 + 2) continue; ents.push({ y: p.y, k: 'p', p }); }
@@ -391,6 +391,8 @@
       else if (e.k === 'p') drawPawnEnt(e.p, g, ctx);
       else if (e.k === 'a') drawAnimalEnt(e.a, g);
     }
+    // позначки «рубати» — маленька сокирка над деревом (малюється поверх крон)
+    for (const [i, t] of map.desig) { if (t !== 'chop' || !map.plant[i]) continue; const x = i % map.w, y = (i / map.w) | 0; if (x < x0 - 1 || x > x1 + 1 || y < y0 - 1 || y > y1 + 1) continue; drawAxe(x * TS + 16, y * TS + 2 + Math.sin(R.time * 0.08 + x * 1.7 + y) * 1.3); }
     // вогонь
     for (const f of map.fires.values()) {
       if (f.x < x0 - 1 || f.x > x1 + 1 || f.y < y0 - 1 || f.y > y1 + 1) continue;
@@ -452,6 +454,11 @@
   // ---------------------------------------------------------------
   //  Окремі елементи
   // ---------------------------------------------------------------
+  function drawAxe(cx, cy) {
+    ctx.fillStyle = 'rgba(18,14,9,0.82)'; ctx.strokeStyle = '#ffc46a'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(cx, cy, 8.5, 0, 6.3); ctx.fill(); ctx.stroke();
+    ctx.lineCap = 'round'; ctx.strokeStyle = '#d9a066'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx - 4.2, cy + 4.6); ctx.lineTo(cx + 2.4, cy - 3.2); ctx.stroke();
+    ctx.fillStyle = '#e4eaf1'; ctx.strokeStyle = '#6f7c8b'; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(cx + 0.6, cy - 6); ctx.lineTo(cx + 6, cy - 3.6); ctx.lineTo(cx + 4.6, cy + 1.4); ctx.lineTo(cx + 2, cy - 1.2); ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
   function drawDesig(x, y, t) {
     const px = x * TS, py = y * TS;
     if (t === 'mine') { ctx.fillStyle = 'rgba(80,200,255,0.28)'; ctx.fillRect(px, py, TS, TS); ctx.strokeStyle = '#6fd4ff'; ctx.lineWidth = 1.5; ctx.strokeRect(px + 2, py + 2, TS - 4, TS - 4); ctx.beginPath(); ctx.moveTo(px + 8, py + 24); ctx.lineTo(px + 24, py + 8); ctx.moveTo(px + 20, py + 6); ctx.lineTo(px + 26, py + 12); ctx.stroke(); }

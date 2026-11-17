@@ -115,7 +115,7 @@
     // авто-оптимізація: якщо кадр стабільно довгий — вмикаємо легкий режим
     if (!RW.R.lite && !Game.paused && Game.running) { lagEma += (Math.min(dt, 200) - lagEma) * 0.03; if (lagEma > 30) { lagT++; if (lagT > 120) { RW.R.lite = true; if (RW.S.gfx.res > 0.8 && (window.devicePixelRatio || 1) > 1.25) { RW.S.gfx.res = 0.75; RW.R.resize(); } RW.UI && RW.UI.toast && RW.UI.toast('Увімкнено полегшену графіку (низький FPS)', 'info'); } } else lagT = 0; }
     if (!Game.paused) {
-      acc += dt;
+      acc += dt * ((RW.S && RW.S.game && RW.S.game.timeScale) || 0.4); // час іде в 2.5 раза повільніше, ніж раніше
       const step = 1000 / 60; const mult = SPEEDS[g.speed] || 0; let n = 0;
       if (g.landing) { // лише ефекти
         acc = 0; RW.Cutscene.update();
