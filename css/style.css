@@ -385,3 +385,14 @@ select,input[type=text],input[type=number]{background:#10141a;border:1px solid #
 .mp-log{flex:1;overflow:auto;background:rgba(0,0,0,.28);border:1px solid #2c3139;border-radius:8px;padding:4px 8px;font-size:12.5px}.mp-l small{color:#6a7886;margin-right:4px}.mp-l.sys{color:#9fb0c0}.mp-l.me b{color:#8ec8ff}.mp-l.peer b{color:#8fe0b8}
 .mp-in{display:flex;gap:4px;margin-top:5px}.mp-in input{flex:1;background:#10161c;color:#e8eef2;border:1px solid #3a4856;border-radius:8px;padding:5px 8px;font:inherit}
 @media (max-width:900px){.mpr{grid-template-columns:1fr}.mp-main,.mp-chat{grid-column:1}}
+
+/* v0.7.4: компактні блоки архітектора */
+.architems{gap:4px}
+.architems .acard{width:68px;padding:3px 2px;border-radius:6px}
+.architems .acard:hover{transform:translateY(-2px)}
+.architems .acard img{width:26px;height:26px;margin-bottom:1px}
+.architems .acard .ai{font-size:18px;height:26px;line-height:26px}
+.architems .acard .an{font-size:9.5px;line-height:1.15;font-weight:600}
+.architems .acard .ac{font-size:8.5px;line-height:1.1;margin-top:1px}
+.archcats{gap:3px}
+.archcats .tab{padding:3px 8px;font-size:11.5px}

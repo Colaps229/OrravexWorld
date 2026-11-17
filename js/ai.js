@@ -206,9 +206,16 @@
       if (!canReachRect(p, b.x, b.y, b.w, b.h)) continue;
       reserve(p, b); return { type: 'decon', b };
     }
-    let best = null, bd = 1e9;
+    let best = null, bd = 1e9, clearI = -1;
     for (const bp of map.blueprints) {
       if (bp.res && bp.res !== p.id) continue;
+      // перешкоди (дерево, скеля) в межах креслення: будівельник спершу прибирає їх
+      let bi = -1; for (let yy = bp.y; yy < bp.y + bp.h && bi < 0; yy++) for (let xx = bp.x; xx < bp.x + bp.w; xx++) { const ii = yy * map.w + xx; const pl = map.plant[ii]; if (map.blk[ii] > 0 || (pl && D.plants[pl.def].tree)) { bi = ii; break; } }
+      if (bi >= 0) {
+        if (!tileFree(p, bi)) continue; const bx = bi % map.w, by = (bi / map.w) | 0;
+        if (!map.reachable(p.tx, p.ty, bx, by, true)) continue;
+        const d = manh(p.tx, p.ty, bx, by) - 1000; if (d < bd) { bd = d; best = bp; clearI = bi; } continue;
+      }
       if (!canReachRect(p, bp.x, bp.y, bp.w, bp.h) && !map.reachable(p.tx, p.ty, bp.x, bp.y, true)) continue;
       // чи вистачає матеріалів
       let ok = true;
@@ -216,7 +223,9 @@
       if (!ok) continue; bp.missing = null;
       const d = manh(p.tx, p.ty, bp.x, bp.y); if (d < bd) { bd = d; best = bp; }
     }
-    if (!best) return null; reserve(p, best);
+    if (!best) return null;
+    if (clearI >= 0) { reserveTile(p, clearI); if (map.blk[clearI] > 0) { map.desig.set(clearI, 'mine'); return { type: 'mine', i: clearI }; } map.desig.set(clearI, 'chop'); return { type: 'chop', i: clearI }; }
+    reserve(p, best);
     return { type: 'build', bp: best };
   };
 
@@ -446,7 +455,7 @@
       if (j) return j;
     }
     // 5. їжа (необов'язкова)
-    if (p.needs.food < 0.5) { const f = findFood(p); if (f) { reserve(p, f); return { type: 'eat', item: f }; } }
+    if (p.needs.food < 0.4) { const f = findFood(p); if (f) { reserve(p, f); return { type: 'eat', item: f }; } }
     // 6. екіпірування
     const eq = equipJob(p); if (eq) return eq;
     // 7. розваги

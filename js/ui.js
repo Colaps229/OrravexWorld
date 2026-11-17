@@ -645,12 +645,12 @@
       const r = dragRect(); const col = t.type === 'build' ? '#7ab8ff' : t.type === 'zone' ? '#6fd46f' : t.type === 'zoneErase' ? '#ff7a6a' : '#ffd070';
       if (t.type === 'build' && !isAreaDef(D.bld[t.def])) { /* одинарне */ }
       ctx.fillStyle = U.rgba(col, 0.2); ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.fillRect(r.x0 * TS, r.y0 * TS, (r.x1 - r.x0 + 1) * TS, (r.y1 - r.y0 + 1) * TS); ctx.strokeRect(r.x0 * TS, r.y0 * TS, (r.x1 - r.x0 + 1) * TS, (r.y1 - r.y0 + 1) * TS);
-      if (t.type === 'build' && isAreaDef(D.bld[t.def])) { for (let y = r.y0; y <= r.y1; y++) for (let x = r.x0; x <= r.x1; x++) { const ok = !map.canPlace(t.def, x, y, 0); ctx.fillStyle = ok ? 'rgba(80,200,120,0.28)' : 'rgba(220,60,50,0.4)'; ctx.fillRect(x * TS + 1, y * TS + 1, TS - 2, TS - 2); } }
+      if (t.type === 'build' && isAreaDef(D.bld[t.def])) { for (let y = r.y0; y <= r.y1; y++) for (let x = r.x0; x <= r.x1; x++) { const ok = !map.canPlace(t.def, x, y, 0, { clear: true }); ctx.fillStyle = ok ? 'rgba(80,200,120,0.28)' : 'rgba(220,60,50,0.4)'; ctx.fillRect(x * TS + 1, y * TS + 1, TS - 2, TS - 2); } }
       ctx.fillStyle = '#fff'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left'; ctx.fillText((r.x1 - r.x0 + 1) + '×' + (r.y1 - r.y0 + 1), r.x1 * TS + TS + 4, r.y0 * TS + 10);
       return;
     }
     if (t.type === 'build') {
-      const d = D.bld[t.def]; const f = map.footprint(t.def, tx, ty, t.rot); const err = map.canPlace(t.def, tx, ty, t.rot);
+      const d = D.bld[t.def]; const f = map.footprint(t.def, tx, ty, t.rot); const err = map.canPlace(t.def, tx, ty, t.rot, { clear: true });
       ctx.globalAlpha = 0.65;
       if (d.wall) ctx.drawImage(GFX.wallSprite(t.def, 0), tx * TS, ty * TS); else if (d.floor) ctx.drawImage(GFX.floorTex[D.FLOORS.indexOf(t.def)][0], tx * TS, ty * TS); else if (d.door) ctx.drawImage(GFX.doorSprite(t.def, true), tx * TS, ty * TS); else ctx.drawImage(GFX.bldSprite(t.def, f.w, f.h), tx * TS, ty * TS);
       ctx.globalAlpha = 1; ctx.fillStyle = err ? 'rgba(230,60,50,0.38)' : 'rgba(70,200,110,0.28)'; ctx.fillRect(tx * TS, ty * TS, f.w * TS, f.h * TS);
@@ -692,7 +692,7 @@
     const cells = []; for (let y = r.y0; y <= r.y1; y++) for (let x = r.x0; x <= r.x1; x++) if (map.inb(x, y)) cells.push([x, y]);
     if (t.type === 'build') {
       const d = D.bld[t.def];
-      for (const [x, y] of cells) { if (map.canPlace(t.def, x, y, t.rot)) { map.addBlueprint(t.def, x, y, t.rot); n++; } else if (cells.length === 1) UI.toast(map.canPlace(t.def, x, y, t.rot), 'bad'); }
+      for (const [x, y] of cells) { const err = map.canPlace(t.def, x, y, t.rot, { clear: true }); if (!err) { const bp = map.addBlueprint(t.def, x, y, t.rot); n++; for (let yy = bp.y; yy < bp.y + bp.h; yy++) for (let xx = bp.x; xx < bp.x + bp.w; xx++) { const ii = yy * map.w + xx; if (map.blk[ii] > 0 && !map.desig.has(ii)) map.desig.set(ii, 'mine'); else if (map.plant[ii] && D.plants[map.plant[ii].def].tree && !map.desig.has(ii)) map.desig.set(ii, 'chop'); } } else if (cells.length === 1) UI.toast(err, 'bad'); }
       if (n) RW.A.sfx('ui');
     } else if (t.type === 'desig') {
       const k = t.kind;

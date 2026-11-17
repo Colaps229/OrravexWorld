@@ -417,8 +417,8 @@
         const i = yy * this.w + xx;
         const t = D.terrain[this.terrain[i]];
         if (!t.build) return 'Не можна будувати на воді';
-        if (this.blk[i] > 0) return 'Зайнято скелею';
-        const pl = this.plant[i]; if (pl && D.plants[pl.def].tree) return 'Зайнято деревом';
+        if (this.blk[i] > 0 && !opts.clear) return 'Зайнято скелею';
+        const pl = this.plant[i]; if (pl && D.plants[pl.def].tree && !opts.clear) return 'Зайнято деревом';
         if (this.bp[i] && !opts.ignoreBp) return 'Вже є креслення';
         if (d.floor) { const b = this.bld[i]; if (b && b.def.floor) return 'Вже підлога'; if (this.floor[i] === FLOORS.indexOf(defKey)) return 'Така підлога вже є'; }
         else {

@@ -274,7 +274,7 @@
     // ================= ПОТРЕБИ =================
     tickNeeds(env) {
       const n = this.needs; const g = G();
-      let hungerRate = 1 / 7200 * (this.has('gourmand') ? 1.25 : 1) * (this.sleeping ? 0.7 : 1);
+      let hungerRate = 1 / 16000 * (this.has('gourmand') ? 1.25 : 1) * (this.sleeping ? 0.7 : 1);
       n.food = Math.max(0, n.food - hungerRate);
       if (!this.sleeping) n.rest = Math.max(0, n.rest - 1 / 9500 * (this.has('night_owl') ? 0.9 : 1));
       n.joy = Math.max(0, n.joy - 1 / 14000);

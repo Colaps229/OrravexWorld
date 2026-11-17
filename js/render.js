@@ -10,7 +10,9 @@
 
   R.cam = { x: 50, y: 50, zoom: 1.2, tx: null };
   R.shake = 0; R.time = 0; R.drawMs = 0;
-  const chunks = new Map();
+  const chunks = new Map(); let chunkSeq = 0;
+  // Кеш землі для віддаленого масштабу: усі чанки зводяться в один кадр-полотно і далі копіюються 1:1
+  let gc = null;
   const parts = [], texts = [], pods = [], rings = [];
   let canvas, ctx, lc, lctx, W = 0, H = 0, dpr = 1;
   R.stats = { fps: 0, frames: 0, last: 0 };
@@ -29,14 +31,17 @@
     canvas.width = Math.max(1, Math.round(W * dpr)); canvas.height = Math.max(1, Math.round(H * dpr));
     R.W = W; R.H = H;
   };
-  R.reset = function () { chunks.clear(); parts.length = 0; texts.length = 0; pods.length = 0; rings.length = 0; };
+  R.reset = function () { gc = null; chunks.clear(); parts.length = 0; texts.length = 0; pods.length = 0; rings.length = 0; };
 
   R.toScreen = function (tx, ty) { const z = R.cam.zoom * TS; return [W / 2 + (tx - R.cam.x) * z, H / 2 + (ty - R.cam.y) * z]; };
   R.toTile = function (sx, sy) { const z = R.cam.zoom * TS; return [R.cam.x + (sx - W / 2) / z, R.cam.y + (sy - H / 2) / z]; };
   R.clampCam = function () {
     const g = G(); if (!g || !g.map) return; const c = R.cam;
-    c.zoom = U.clamp(c.zoom, 0.45, 3.2);
-    c.x = U.clamp(c.x, 0, g.map.w); c.y = U.clamp(c.y, 0, g.map.h);
+    // не показуємо порожнечу за краєм карти: мінімальний масштаб — коли карта якраз заповнює екран
+    const zmin = Math.min(3.2, Math.max(0.45, W / (g.map.w * TS), H / (g.map.h * TS)));
+    c.zoom = U.clamp(c.zoom, zmin, 3.2);
+    const hx = Math.min(g.map.w / 2, W / (2 * c.zoom * TS)), hy = Math.min(g.map.h / 2, H / (2 * c.zoom * TS));
+    c.x = U.clamp(c.x, hx, g.map.w - hx); c.y = U.clamp(c.y, hy, g.map.h - hy);
   };
 
   // ---------------------------------------------------------------
@@ -47,7 +52,7 @@
     const key = cy * 64 + cx; const S = 16;
     let ch = chunks.get(key);
     if (!ch) { ch = { c: GFX.mk(S * TS, S * TS) }; chunks.set(key, ch); }
-    ch.stale = false;
+    ch.stale = false; ch.v = ++chunkSeq;
     const x = ch.c.getContext('2d'); x.clearRect(0, 0, S * TS, S * TS);
     const w = map.w, h = map.h;
     for (let ty = 0; ty < S; ty++) for (let tx = 0; tx < S; tx++) {
@@ -257,6 +262,23 @@
   const ZONE_COL = { stock: '#d8a040', grow: '#4aa84a', pen: '#c88a5a' };
   const ENTS = [], SEEN = new Set();
   R.draw = function () { const t0 = performance.now(); drawFrame(); R.drawMs += (performance.now() - t0 - R.drawMs) * 0.25; };
+  // Малює всі вже побудовані чанки навколо екрана (з запасом M) в окреме полотно, початок координат — ціле число пікселів пристрою
+  function buildGroundCache(map, cam, cz, ox, oy) {
+    const cw0 = canvas.width, ch0 = canvas.height, M = Math.round(Math.max(96, 300 * dpr));
+    if (!gc) { gc = { cv: document.createElement('canvas') }; gc.cx = gc.cv.getContext('2d', { alpha: false }); gc.inc = new Map(); }
+    if (gc.cv.width !== cw0 + 2 * M || gc.cv.height !== ch0 + 2 * M) { gc.cv.width = cw0 + 2 * M; gc.cv.height = ch0 + 2 * M; }
+    const x = gc.cx, zs = cz * dpr, ox0 = Math.round(ox * dpr), oy0 = Math.round(oy * dpr);
+    x.setTransform(1, 0, 0, 1, 0, 0); x.fillStyle = '#0c1014'; x.fillRect(0, 0, gc.cv.width, gc.cv.height);
+    x.setTransform(zs, 0, 0, zs, ox0 + M, oy0 + M); x.imageSmoothingEnabled = cz < 0.9 || cz > 1.6;
+    const CS = 16 * TS, wx0 = (-ox0 - M) / zs, wy0 = (-oy0 - M) / zs, wx1 = (gc.cv.width - ox0 - M) / zs, wy1 = (gc.cv.height - oy0 - M) / zs;
+    const cx0 = Math.max(0, Math.floor(wx0 / CS)), cy0 = Math.max(0, Math.floor(wy0 / CS)), cx1 = Math.min((map.w - 1) >> 4, Math.floor(wx1 / CS)), cy1 = Math.min((map.h - 1) >> 4, Math.floor(wy1 / CS));
+    gc.inc.clear();
+    for (let cy = cy0; cy <= cy1; cy++) for (let cx = cx0; cx <= cx1; cx++) {
+      const ch = chunks.get(cy * 64 + cx); if (!ch) continue;
+      x.drawImage(ch.c, cx * CS, cy * CS); gc.inc.set(cy * 64 + cx, ch.v);
+    }
+    gc.zoom = cz; gc.dpr = dpr; gc.cw = cw0; gc.ch = ch0; gc.M = M; gc.ox0 = ox0; gc.oy0 = oy0;
+  }
   function drawFrame() {
     const g = G(); if (!ctx) return;
     R.time++;
@@ -276,11 +298,23 @@
     // чанки
     const tChunks = performance.now(); let staleBuilt = 0;
     R.view = [x0 >> 4, y0 >> 4, x1 >> 4, y1 >> 4];
+    // кеш землі: лише коли віддалено (чанки стискаються) і масштаб стабільний
+    const cz = cam.zoom; R.zStable = cz === R.zLast ? (R.zStable || 0) + 1 : 0; R.zLast = cz;
+    const useGc = cz < 0.95 && R.zStable > 6 && !R.noGroundCache;
+    let gcOk = useGc && gc && gc.zoom === cz && gc.dpr === dpr && gc.cw === canvas.width && gc.ch === canvas.height;
+    const ddx = gcOk ? Math.round(ox * dpr - gc.ox0) : 0, ddy = gcOk ? Math.round(oy * dpr - gc.oy0) : 0;
+    if (gcOk && (Math.abs(ddx) > gc.M || Math.abs(ddy) > gc.M)) gcOk = false;
     for (let cy = y0 >> 4; cy <= y1 >> 4; cy++) for (let cx = x0 >> 4; cx <= x1 >> 4; cx++) {
       const key = cy * 64 + cx; let ch = chunks.get(key);
       if (!ch || map.dirtyChunks.has(key)) { buildChunk(map, cx, cy); map.dirtyChunks.delete(key); ch = chunks.get(key); }
       else if (ch.stale && (staleBuilt === 0 || performance.now() - tChunks < 5)) { buildChunk(map, cx, cy); staleBuilt++; }
-      ctx.drawImage(ch.c, cx * 16 * TS, cy * 16 * TS);
+      if (gcOk && gc.inc.get(key) !== ch.v) gcOk = false;
+      if (!useGc) ctx.drawImage(ch.c, cx * 16 * TS, cy * 16 * TS);
+    }
+    if (useGc) {
+      if (!gcOk) buildGroundCache(map, cam, cz, ox, oy);
+      const g2 = gc; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(g2.cv, (gcOk ? ddx : 0) - g2.M, (gcOk ? ddy : 0) - g2.M); ctx.restore();
     }
     if (map.allDirty) map.allDirty = false;
     // попередня побудова сусідніх чанків (по одному за кадр, лише коли кадр легкий) — прокрутка без підвисань
@@ -578,7 +612,7 @@
     // приміщення темніші вдень
     const tsz = z * sc;
     lctx.fillStyle = 'rgba(8,10,22,' + (0.26 * dl + 0.0).toFixed(3) + ')';
-    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const i = y * map.w + x; if (map.mroof[i] && map.blk[i] === 0 || map.room[i] >= 0) { const rx = (x * z + ox) * sc, ry = (y * z + oy) * sc; lctx.fillRect(rx, ry, tsz + 0.6, tsz + 0.6); grow(rx, ry, rx + tsz + 0.6, ry + tsz + 0.6); } else if (map.blk[i] > 0) { /* скеля — не освітлюємо */ } }
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const i = y * map.w + x; if (map.mroof[i] && map.blk[i] === 0) { const rx = (x * z + ox) * sc, ry = (y * z + oy) * sc; lctx.fillRect(rx, ry, tsz + 0.6, tsz + 0.6); grow(rx, ry, rx + tsz + 0.6, ry + tsz + 0.6); } else if (map.blk[i] > 0) { /* скеля — не освітлюємо */ } }
     // джерела світла
     lctx.globalCompositeOperation = 'destination-out';
     const light = (cx, cy, rr, a) => {

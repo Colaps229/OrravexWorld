@@ -42,7 +42,8 @@
       <button class="btn big mb-i" style="--d:1" data-m="mpHome"><i>🌐</i>Мультиплеєр</button>
       <button class="btn big mb-i" style="--d:2" data-m="settings"><i>⚙</i>Налаштування</button>
       <button class="btn big mb-i" style="--d:3" data-m="help"><i>📖</i>Як грати</button>
-      <button class="btn big mb-i" style="--d:4" data-m="versions"><i>🧬</i>Версії та новини</button></div><div class="ver"><b>${V.name}</b> · v${V.num} ${V.stage} «${V.codename}» · HTML5 Canvas · усі текстури й звуки створюються програмно</div>`, 'menu-main');
+      <button class="btn big mb-i" style="--d:4" data-m="versions"><i>🧬</i>Версії та новини</button>
+      <button class="btn big mb-i" style="--d:5" data-m="quitGame"><i>⏻</i>Вийти з гри</button></div><div class="ver"><b>${V.name}</b> · v${V.num} ${V.stage} «${V.codename}» · HTML5 Canvas · усі текстури й звуки створюються програмно</div>`, 'menu-main');
   };
   A.versions = () => show(`<h2>🧬 Версії та новини</h2><div class="scroll vlog" style="max-height:62vh">${RW.VER.log.map((e, k) => `<div class="vrow ${k === 0 ? 'cur' : ''}" style="--d:${k}"><div class="vh"><span class="vnum">v${e.v}</span><b>${esc(e.t)}</b><span class="sub">${e.d}</span>${k === 0 ? '<span class="vbadge">поточна</span>' : ''}</div><ul>${e.items.map(x => '<li>' + esc(x) + '</li>').join('')}</ul></div>`).join('')}</div><div class="btnrow">${back('back')}</div>`, 'menu-wide');
   A.back = () => M.fromGame ? M.showPause() : M.showMain();
@@ -53,7 +54,16 @@
   // ------------------------- Пауза -------------------------
   M.showPause = function () {
     M.fromGame = true; RW.G.speedBefore = RW.G.speed; RW.G.speed = 0; RW.Game.paused = true;
-    show(`<h2>⏸ Пауза</h2><div class="mlist"><button class="btn big" data-m="resume">▶ Продовжити</button><button class="btn big" data-m="saveMenu">💾 Зберегти гру</button><button class="btn big" data-m="loadMenu">📂 Завантажити</button><button class="btn big" data-m="settings">⚙ Налаштування</button><button class="btn big" data-m="exportSave">📤 Експорт у файл</button><button class="btn big" data-m="toMain">🏠 Головне меню</button></div>`);
+    show(`<h2>⏸ Пауза</h2><div class="mlist"><button class="btn big" data-m="resume">▶ Продовжити</button><button class="btn big" data-m="saveMenu">💾 Зберегти гру</button><button class="btn big" data-m="loadMenu">📂 Завантажити</button><button class="btn big" data-m="settings">⚙ Налаштування</button><button class="btn big" data-m="exportSave">📤 Експорт у файл</button><button class="btn big" data-m="toMain">🏠 Головне меню</button><button class="btn big" data-m="quitGame">⏻ Вийти з гри</button></div>`);
+  };
+  // Вихід: закриває вікно (у лаунчері — повертає до нього); у звичайному браузері вкладку можна закрити лише вручну
+  A.showMain = () => M.showMain();
+  A.quitGame = () => {
+    if (!confirm('Вийти з гри?' + (M.fromGame ? ' Незбережений прогрес буде втрачено.' : ''))) return;
+    try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) { }
+    try { RW.Net && RW.Net.close && RW.Net.close(); } catch (e) { }
+    window.close();
+    setTimeout(() => { show('<h2>До зустрічі!</h2><p style="text-align:center">Гру зупинено. Тепер можна закрити цю вкладку (Ctrl+W).</p><div class="btnrow"><button class="btn" data-m="showMain">Повернутися в меню</button></div>'); }, 250);
   };
   A.resume = () => { M.hide(); M.fromGame = false; RW.Game.paused = false; RW.G.speed = RW.G.speedBefore || 1; };
   A.exportSave = () => RW.Save.exportFile();

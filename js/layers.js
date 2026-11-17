@@ -39,7 +39,7 @@
   };
   // ---- застосування інструмента ----
   Ly.apply = function (t, cells) {
-    const g = G(), map = g.map; const roof = Ly.arr(map); let n = 0, lack = false; const stock = RW.Events.colonyStock(); const need = {};
+    const g = G(), map = g.map; const roof = Ly.arr(map); let n = 0, lack = false; const stock = RW.Events.colonyStock(); const stk = Object.assign({}, stock); let instant = 0; const need = {};
     const take = (def, k) => { const s = map.byDef.get(def); if (!s) return; let left = k; for (const it of Array.from(s)) { if (left <= 0) break; if (it.forbid || it.res) continue; const q = Math.min(left, it.n); map.takeItem(it, q); left -= q; } };
     for (const [x, y] of cells) {
       const i = y * map.w + x; if (x < 0 || y < 0 || x >= map.w || y >= map.h) continue; if (map.blk[i] > 0 || map.terrain[i] <= 1 && !map.bld[i]) continue;
@@ -47,10 +47,13 @@
       if (t.kind === 'remove') { if (map.mroof[i]) continue; if (roof[i] > 0 && roof[i] !== 255) { const R = ROOF[roof[i]]; roof[i] = 0; for (const c in R.cost) map.addItem(c, Math.floor(R.cost[c] / 2), x, y); n++; } else if (map.room[i] >= 0 && roof[i] !== 255) { roof[i] = 255; n++; } continue; }
       if (t.kind === 'restore') { if (roof[i] === 255) { roof[i] = 0; n++; } continue; }
       const R = ROOF[t.kind]; if (roof[i] === +t.kind) continue; const bp = Ly.bps(map); const ex = bp.get(i); if (ex && ex.kind === +t.kind) continue;
-      bp.set(i, { kind: +t.kind, prog: 0, res: null }); n++;
+      // дах будується миттєво, якщо вистачає матеріалів; інакше лишається кресленням
+      if (costOK(+t.kind, stk)) { for (const c in R.cost) stk[c] -= R.cost[c]; const old = roof[i]; if (old > 0 && old !== 255) { const O = ROOF[old]; for (const c in O.cost) map.addItem(c, Math.floor(O.cost[c] / 2), x, y); } takeMats(map, +t.kind); roof[i] = +t.kind; bp.delete(i); instant++; n++; continue; }
+      bp.set(i, { kind: +t.kind, prog: 0, res: null }); n++; if (map.plant[i] && RW.D.plants[map.plant[i].def].tree && !map.desig.has(i)) map.desig.set(i, 'chop');
     }
+    if (instant) { g.stats.built += instant; map.allDirty = true; if (map.roomsDirty !== undefined) map.roomsDirty = true; RW.R && RW.R.invalidateAll && RW.R.invalidateAll(); RW.A && RW.A.sfx('hammer'); }
     const plan = t.kind !== 'remove' && t.kind !== 'restore';
-    if (n && plan) { RW.A && RW.A.sfx('click'); RW.UI && RW.UI.toast('Заплановано дах: ' + n + ' кл. — колоністи побудують (робота «Будівництво»)', 'info'); }
+    if (n && plan) { RW.A && RW.A.sfx('click'); RW.UI && RW.UI.toast(instant === n ? 'Дах збудовано: ' + n + ' кл.' : 'Дах: ' + instant + ' кл. збудовано, решта чекає матеріалів (робота «Будівництво»)', 'info'); }
     if (n && !plan) { RW.A && RW.A.sfx('hammer'); map.allDirty = true; if (map.roomsDirty !== undefined) map.roomsDirty = true; RW.R && RW.R.invalidateAll && RW.R.invalidateAll(); }
     return n;
   };
@@ -67,7 +70,7 @@
     const g = G(); const roof = Ly.arr(map); const mode = Ly.mode; const tool = RW.UI && RW.UI.tool; const showRoof = mode === 'roof' || (tool && tool.type === 'roof');
     x0 = Math.max(0, x0); y0 = Math.max(0, y0); x1 = Math.min(map.w - 1, x1); y1 = Math.min(map.h - 1, y1);
     // заплановані дахи (креслення): пунктир + прогрес
-    const bps = Ly.bps(map); if (bps.size) { c.save(); c.lineWidth = 1.4; c.setLineDash([5, 4]); c.lineDashOffset = -(t * 0.25) % 9; for (const [i, b] of bps) { const x = i % map.w, y = (i / map.w) | 0; if (x < x0 || x > x1 || y < y0 || y > y1) continue; const R = ROOF[b.kind]; c.fillStyle = R.col; c.globalAlpha = 0.14 + b.prog * 0.3; c.fillRect(x * TS, y * TS, TS, TS); c.globalAlpha = 0.85; c.strokeStyle = b.res ? '#ffd070' : '#7ab8ff'; c.strokeRect(x * TS + 2, y * TS + 2, TS - 4, TS - 4); if (b.prog > 0) { c.setLineDash([]); c.fillStyle = '#ffd070'; c.fillRect(x * TS + 3, y * TS + TS - 6, (TS - 6) * b.prog, 3); c.setLineDash([5, 4]); } } c.restore(); }
+    const bps = Ly.bps(map); if (bps.size && showRoof) { c.save(); c.lineWidth = 1.4; c.setLineDash([5, 4]); c.lineDashOffset = -(t * 0.25) % 9; for (const [i, b] of bps) { const x = i % map.w, y = (i / map.w) | 0; if (x < x0 || x > x1 || y < y0 || y > y1) continue; const R = ROOF[b.kind]; c.fillStyle = R.col; c.globalAlpha = 0.14 + b.prog * 0.3; c.fillRect(x * TS, y * TS, TS, TS); c.globalAlpha = 0.85; c.strokeStyle = b.res ? '#ffd070' : '#7ab8ff'; c.strokeRect(x * TS + 2, y * TS + 2, TS - 4, TS - 4); if (b.prog > 0) { c.setLineDash([]); c.fillStyle = '#ffd070'; c.fillRect(x * TS + 3, y * TS + TS - 6, (TS - 6) * b.prog, 3); c.setLineDash([5, 4]); } } c.restore(); }
     // видимі дахи над відкритими ділянками (навіси)
     const sel = g.sel && g.sel.p; const near = (x, y) => { for (const p of g.pawns) if (p.faction === 'colony' && Math.abs(p.tx - x) < 2 && Math.abs(p.ty - y) < 2) return true; return false; };
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
@@ -118,7 +121,7 @@
   };
 
   // ---- будівництво даху колоністами ----
-  const AI = RW.AI; const WORK = { 1: 70, 2: 120, 3: 160 };
+  const AI = RW.AI; const WORK = { 1: 4, 2: 4, 3: 4 };
   const costOK = (kind, stock) => { for (const c in ROOF[kind].cost) if ((stock[c] || 0) < ROOF[kind].cost[c]) return false; return true; };
   const takeMats = (map, kind) => { for (const c in ROOF[kind].cost) { const st = map.byDef.get(c); let left = ROOF[kind].cost[c]; if (!st) continue; for (const it of Array.from(st)) { if (left <= 0) break; if (it.forbid || it.res) continue; const q = Math.min(left, it.n); map.takeItem(it, q); left -= q; } } };
   function roofJob(p) {

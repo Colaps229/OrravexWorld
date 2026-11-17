@@ -13,7 +13,8 @@
       if (navigator.keyboard && navigator.keyboard.lock) navigator.keyboard.lock(['Escape']).catch(() => {});
     }).catch(() => {});
   };
-  document.addEventListener('fullscreenchange', () => { const b = document.getElementById('fsbtn'); if (b) b.textContent = X.isFs() ? '🗗' : '⛶'; if (!X.isFs() && navigator.keyboard && navigator.keyboard.unlock) navigator.keyboard.unlock(); });
+  const lockEsc = () => { try { if (navigator.keyboard && navigator.keyboard.lock) navigator.keyboard.lock(['Escape']).catch(() => {}); } catch (e) { } };
+  document.addEventListener('fullscreenchange', () => { if (X.isFs()) lockEsc(); const b = document.getElementById('fsbtn'); if (b) b.textContent = X.isFs() ? '🗗' : '⛶'; if (!X.isFs() && navigator.keyboard && navigator.keyboard.unlock) navigator.keyboard.unlock(); });
   window.addEventListener('load', () => {
     const mk = () => { const b = document.createElement('button'); b.id = 'fsbtn'; b.className = 'fsbtn'; b.title = 'Повний екран [F11 / Alt+Enter]'; b.textContent = '⛶'; b.onclick = X.toggle; document.body.appendChild(b); };
     mk();
