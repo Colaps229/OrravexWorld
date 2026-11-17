@@ -65,6 +65,7 @@
     g.ext = g.ext || {};
     g.ext.mp = { on: true, role: cfg.role, myName: cfg.myName, peerName: cfg.peerName, worldSeed: cfg.worldSeed, worldBiome: cfg.worldBiome, pos: cfg.pos, mode: cfg.mode, sid: cfg.sid, rel: 'peace', relSince: 0, warLock: 0, away: {}, offers: [], out: {}, inRaids: [], guests: {}, recall: {}, stats: { trades: 0, visits: 0, raidsOut: 0, raidsIn: 0, wins: 0, losses: 0 }, raidCool: 0, closed: false, peerInfo: null, peaceReq: false };
     MP.chat = []; MP.snap = null; MP.rp = {}; MP.peek = false; MP.dirty = { tab: true, log: true, card: true };
+    if (Net.state === 'open') setTimeout(() => { MP.peek = true; send({ t: 'peek', on: true }); }, 500);
     sysChat('Колонія «' + cfg.peerName + '» тепер ваш сусід. Світ: мир.');
   };
 
@@ -177,6 +178,7 @@
     switch (m.t) {
       case 'status': s.peerInfo = m.i; MP.dirty.card = true; break;
       case 'chat': addChat('peer', m.text); break;
+      case 'arrived': { const nmP = s.peerName; const t = m.k === 'goods' ? '📦 ' + (m.label || 'Караван') + ' доставлено до «' + nmP + '»' : m.k === 'visit' ? '🚶 ' + (m.name || 'Колоніст') + ' прибув(ла) у гості до «' + nmP + '»' : '⚔ Ваш загін (' + (m.n || '?') + ') прибув до «' + nmP + '»'; sysChat(t); RW.UI.toast(t, m.k === 'raid' ? 'bad' : 'good'); MP.dirty.tab = true; break; }
       case 'tradeOffer': {
         if (s.rel === 'war' || s.closed) { send({ t: 'tradeReply', id: m.id, ok: false }); break; }
         s.offers.push({ id: m.id, give: clean(m.give), want: clean(m.want), t: g.tick });
@@ -231,16 +233,17 @@
   MP.arrive = function (g, c) {
     const s = st(g); if (!s) return; const sp = g.tradeSpot;
     if (c.kind === 'mpout') return;
-    if (c.kind === 'mpgoods') { dropGoods(c.items || {}); RW.UI.letter('Караван прибув', (c.label || 'Караван') + ' від «' + s.peerName + '»: ' + listTxt(c.items) + '. Лежить біля торгової точки; дозвольте колоністам його підняти.', 'good', null, { x: sp.x, y: sp.y }); return; }
+    if (c.kind === 'mpgoods') { send({ t: 'arrived', k: 'goods', label: c.label || 'Караван' }); dropGoods(c.items || {}); RW.UI.letter('Караван прибув', (c.label || 'Караван') + ' від «' + s.peerName + '»: ' + listTxt(c.items) + '. Лежить біля торгової точки; дозвольте колоністам його підняти.', 'good', null, { x: sp.x, y: sp.y }); return; }
     if (c.kind === 'mpreturn') { const names = restorePawns(c.restore || [], c.thought); if (c.items && Object.keys(c.items).length) dropGoods(c.items); RW.UI.letter('Вдома', (names.length ? names.join(', ') + ' повернулись додому.' : 'Загін не повернувся.') + (c.items && Object.keys(c.items).length ? ' Здобич: ' + listTxt(c.items) + '.' : ''), 'good'); return; }
     if (c.kind === 'mpvisit') {
       const p = foreign(c.packed, 'guest'); p.mpGuest = c.mid; p.title = 'Гість з «' + s.peerName + '»'; p.leaveAt = s.recall[c.mid] ? 0 : g.tick + (c.stay || DY); p.vstate = 'arrive'; p.isTrader = false; g.pawns.push(p);
-      s.guests[c.mid] = { pawnId: p.id, name: nm(p), at: g.tick }; s.stats.visits++; for (const o of colonists()) o.addThought('mp_guest');
+      s.guests[c.mid] = { pawnId: p.id, name: nm(p), at: g.tick }; s.stats.visits++; send({ t: 'arrived', k: 'visit', name: nm(p) }); for (const o of colonists()) o.addThought('mp_guest');
       RW.UI.letter('Гість із «' + s.peerName + '»', nm(p) + ' прийшов(ла) у гості. Колонія в доброму настрої.', 'good', p); return;
     }
     if (c.kind === 'mpraid') {
       const sp2 = E().edgeSpawn(g.map, g.home); const mem = []; const refs = [];
       for (const pk of c.packed) { const p = foreign(pk, 'enemy'); p.mpRaid = c.mid; p.aiKind = 'pirate'; p.x = sp2.x + 0.5 + U.rr(-2, 2); p.y = sp2.y + 0.5 + U.rr(-2, 2); if (g.map.cost[Math.floor(p.y) * g.map.w + Math.floor(p.x)] === 0) { p.x = sp2.x + 0.5; p.y = sp2.y + 0.5; } p.look.shirt = '#3a6a9a'; g.pawns.push(p); mem.push(p.id); refs.push(p); }
+      send({ t: 'arrived', k: 'raid', n: refs.length });
       g.raids.push({ id: U.nextId(), members: mem, start: g.tick, kind: 'player' }); s.inRaids.push({ id: c.mid, members: mem, start: g.tick, quiet: 0 }); MP.rp[c.mid] = refs;
       RW.UI.letter('Набіг!', 'Загін із ' + refs.length + ' бійців колонії «' + s.peerName + '» вдерся на вашу територію (' + ['півночі', 'півдня', 'заходу', 'сходу'][sp2.side] + ')!', 'bad', null, { x: sp2.x, y: sp2.y }); RW.A && RW.A.sfx('alert');
     }
@@ -317,7 +320,7 @@
         for (const k2 of Object.keys(s.guests)) { const p = G().pawns.find(x => x.id === s.guests[k2].pawnId); if (p) p.leaveAt = 0; }
         for (const r of s.inRaids) for (const p of (MP.rp[r.id] || [])) if (!p.dead) p.fleeing = true; MP.dirty.card = true; }
       else if (MP.lobbyClose) MP.lobbyClose();
-    } else if (k === 'open') { if (MP.active() && RW.Game.running) { sysChat('Зʼєднання встановлено.'); sendStatus(); const s = st(G()); if (Object.values(s.away).some(a => a.kind === 'visit')) send({ t: 'peek', on: true }); MP.dirty.card = true; } else if (MP.lobbyOpen) MP.lobbyOpen(); }
+    } else if (k === 'open') { if (MP.active() && RW.Game.running) { sysChat('Зʼєднання встановлено.'); sendStatus(); send({ t: 'peek', on: true }); MP.dirty.card = true; } else if (MP.lobbyOpen) MP.lobbyOpen(); }
   });
   window.addEventListener('beforeunload', () => { try { Net.send({ t: 'bye' }); } catch (e) { } });
 
@@ -327,7 +330,7 @@
   function drawSnap() {
     const cv = document.getElementById('mp-cv'); if (!cv) return; const x = cv.getContext('2d'); const sn = MP.snap;
     x.fillStyle = '#0c1118'; x.fillRect(0, 0, cv.width, cv.height);
-    if (!sn) { x.fillStyle = '#7a8694'; x.font = '12px sans-serif'; x.textAlign = 'center'; x.fillText('Надішліть колоніста в гості —', cv.width / 2, cv.height / 2 - 6); x.fillText('і ви бачитимете їхню колонію', cv.width / 2, cv.height / 2 + 12); return; }
+    if (!sn) { x.fillStyle = '#7a8694'; x.font = '12px sans-serif'; x.textAlign = 'center'; x.fillText('Очікуємо знімок колонії друга…', cv.width / 2, cv.height / 2 - 6); x.fillText('(мінікарта з’явиться за мить)', cv.width / 2, cv.height / 2 + 12); return; }
     const s = Math.min(cv.width / sn.w, cv.height / sn.h); const ox = (cv.width - sn.w * s) / 2, oy = (cv.height - sn.h * s) / 2;
     for (let i = 0; i < sn.c.length; i++) { const ch = +sn.c[i]; x.fillStyle = SNAPCOL[ch]; x.fillRect(ox + (i % sn.w) * s, oy + ((i / sn.w) | 0) * s, s + 0.6, s + 0.6); }
     for (const p of sn.p) { const px = ox + p[0] * s, py = oy + p[1] * s; x.fillStyle = FAC_ICO[p[2]] || '#fff'; x.beginPath(); x.arc(px, py, p[2] === 2 ? 3.4 : 2.2, 0, 6.3); x.fill(); if (p[2] === 2) { x.strokeStyle = '#fff'; x.lineWidth = 1; x.stroke(); } }
@@ -343,6 +346,7 @@
     if (!on) h += '<div class="btnrow"><button class="btn xs" data-rc="host">🔌 Підключитись (створити код)</button><button class="btn xs" data-rc="join">🔗 Ввести код друга</button></div>';
     if (i) h += `<div class="mp-stats"><span>👥 ${i.pop}</span><span>📅 день ${i.day}</span><span>💰 ${i.wealth}</span><span>😊 ${i.mood}%</span><span>🗡 ${i.armed}/${i.pop}</span>${i.threat ? '<span class="neg">⚠ під загрозою</span>' : ''}${i.closed ? '<span>🚫 кордони закриті</span>' : ''}</div>`; else h += '<div class="sub">Чекаємо на дані…</div>';
     h += `<div class="sub">Відстань: ${MP.hours(MP.travel())} год дороги</div>`;
+    if (RW.Spec) h += `<div class="btnrow"><button class="btn xs" data-spec="go" ${on ? '' : 'disabled'}>👁 Дивитись світ друга</button></div><label class="mp-allow"><input type="checkbox" id="mp-allow" ${RW.Spec.allow ? 'checked' : ''}> Друг може дивитись мою колонію</label>${RW.Spec.providing ? '<div class="sub">👁 Друг дивиться вашу колонію зараз</div>' : ''}`;
     return h;
   }
   function tabHtml() {
@@ -406,7 +410,8 @@
   function build(root) {
     root.dataset.i = '1';
     root.querySelectorAll('.mp-tabs button').forEach(b => b.onclick = () => { MP.tab = b.dataset.t; MP.dirty.tab = true; });
-    root.querySelector('#mp-card').onclick = e => { const b = e.target.closest('[data-rc]'); if (b) { RW.UI.closeWin('mp'); RW.MP.reconnect && RW.MP.reconnect(b.dataset.rc === 'host'); } };
+    root.querySelector('#mp-card').onchange = e => { if (e.target.id === 'mp-allow') RW.Spec.setAllow(e.target.checked); };
+    root.querySelector('#mp-card').onclick = e => { if (e.target.closest('[data-spec]')) { RW.UI.closeWin('mp'); RW.Spec.start(); return; } const b = e.target.closest('[data-rc]'); if (b) { RW.UI.closeWin('mp'); RW.MP.reconnect && RW.MP.reconnect(b.dataset.rc === 'host'); } };
     const tab = root.querySelector('#mp-tab'); tab.onclick = onTabClick; tab.oninput = e => { if (e.target.matches('[data-g],[data-w]')) sumUpdate(); }; tab.onchange = e => { if (e.target.id === 'mp-closed') { st(G()).closed = e.target.checked; sysChat(e.target.checked ? 'Кордони закрито.' : 'Кордони відкрито.'); } };
     const inp = root.querySelector('#mp-in'); const go = () => { MP.say(inp.value); inp.value = ''; }; inp.onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') go(); }; inp.onkeyup = e => e.stopPropagation(); root.querySelector('#mp-send').onclick = go;
     root.querySelectorAll('[data-e]').forEach(b => b.onclick = () => MP.say(b.dataset.e));

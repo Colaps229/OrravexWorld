@@ -396,3 +396,9 @@ select,input[type=text],input[type=number]{background:#10141a;border:1px solid #
 .architems .acard .ac{font-size:8.5px;line-height:1.1;margin-top:1px}
 .archcats{gap:3px}
 .archcats .tab{padding:3px 8px;font-size:11.5px}
+
+/* перегляд колонії друга */
+.spec-hud{position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:60;display:flex;gap:14px;align-items:center;padding:7px 14px;border-radius:10px;background:rgba(14,18,26,.9);border:1px solid #c8a24a;color:#e8eef2;font-size:13px;box-shadow:0 6px 22px rgba(0,0,0,.5)}
+.spec-hud b{color:#ffd27a}.spec-hud span{opacity:.85}.spec-hud .spec-warn{color:#ff8a70;opacity:1;font-weight:600}
+.spec-hud button{padding:4px 12px;border-radius:7px;border:1px solid #c8a24a;background:#3a2c10;color:#ffe2a0;cursor:pointer}.spec-hud button:hover{background:#5a4318}
+.mp-allow{display:block;font-size:11px;opacity:.8;margin-top:4px}

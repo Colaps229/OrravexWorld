@@ -1,7 +1,7 @@
 {
- "version": "0.7.5",
- "build": "mwl0r0z9",
- "date": "2026-11-17T18:21:35.541Z",
+ "version": "0.7.6",
+ "build": "mwl16mr4",
+ "date": "2026-11-17T18:33:43.600Z",
  "files": [
   "README.md",
   "css/style.css",
@@ -40,6 +40,7 @@
   "js/reshud.js",
   "js/save.js",
   "js/scenes.js",
+  "js/spectate.js",
   "js/storage.js",
   "js/traders.js",
   "js/ui.js",

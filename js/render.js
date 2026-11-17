@@ -6,7 +6,7 @@
   const D = RW.D, U = RW.U, GFX = RW.GFX;
   const TS = 32;
   const R = RW.R = {};
-  const G = () => RW.G;
+  const G = () => R.viewG || RW.G; // під час перегляду колонії друга — «примарна» гра
 
   R.cam = { x: 50, y: 50, zoom: 1.2, tx: null };
   R.shake = 0; R.time = 0; R.drawMs = 0;
@@ -407,7 +407,7 @@
       ctx.restore();
     }
     // частинки
-    for (const p of parts) {
+    if (!R.viewG) for (const p of parts) {
       const a = p.life / p.max;
       if (p.t === 'swing') { ctx.save(); ctx.translate(p.x * TS, p.y * TS); ctx.rotate(p.ang); ctx.strokeStyle = 'rgba(255,255,255,' + a.toFixed(2) + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 9, -0.9 + (1 - a) * 1.8, -0.2 + (1 - a) * 1.8); ctx.stroke(); ctx.restore(); continue; }
       if (p.t === 'bolt') { ctx.strokeStyle = 'rgba(220,235,255,' + a.toFixed(2) + ')'; ctx.lineWidth = 3; ctx.beginPath(); let bx = p.x * TS + 10, by = p.y * TS - 400; ctx.moveTo(bx, by); while (by < p.y * TS) { by += 30; bx += (Math.random() - 0.5) * 36; ctx.lineTo(bx, by); } ctx.stroke(); continue; }
@@ -418,33 +418,33 @@
       else ctx.fillRect(p.x * TS, p.y * TS, p.s, p.s);
       ctx.globalAlpha = 1;
     }
-    for (const r of rings) { ctx.strokeStyle = U.rgba(r.c, 1 - r.t / 28); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(r.x * TS, r.y * TS, r.r * TS, 0, 6.3); ctx.stroke(); }
+    if (!R.viewG) for (const r of rings) { ctx.strokeStyle = U.rgba(r.c, 1 - r.t / 28); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(r.x * TS, r.y * TS, r.r * TS, 0, 6.3); ctx.stroke(); }
     if (RW.Farming) RW.Farming.draw(ctx, TS, map, x0, y0, x1, y1, R.time);
     if (RW.Cooking) RW.Cooking.drawItems(ctx, TS, map, x0, y0, x1, y1, R.time);
     if (RW.Quality) { RW.Quality.drawItems(ctx, TS, map, x0, y0, x1, y1, R.time); RW.Quality.drawBuildings(ctx, TS, map, R.time); }
-    if (RW.Disasters) RW.Disasters.drawMeteors(ctx, TS, R.time);
-    if (RW.Husbandry) RW.Husbandry.drawOverlay(ctx, TS, R.time);
-    if (RW.Prisoners) RW.Prisoners.drawOverlay(ctx, TS, R.time);
+    if (RW.Disasters && !R.viewG) RW.Disasters.drawMeteors(ctx, TS, R.time);
+    if (RW.Husbandry && !R.viewG) RW.Husbandry.drawOverlay(ctx, TS, R.time);
+    if (RW.Prisoners && !R.viewG) RW.Prisoners.drawOverlay(ctx, TS, R.time);
     if (RW.Layers) RW.Layers.draw(ctx, TS, map, x0, y0, x1, y1, R.time);
-    if (RW.Traders) RW.Traders.draw(ctx, TS, R.time);
-    if (RW.Rel) RW.Rel.drawParty(ctx, TS, R.time);
-    if (RW.FX2) RW.FX2.draw(ctx, TS);
+    if (RW.Traders && !R.viewG) RW.Traders.draw(ctx, TS, R.time);
+    if (RW.Rel && !R.viewG) RW.Rel.drawParty(ctx, TS, R.time);
+    if (RW.FX2 && !R.viewG) RW.FX2.draw(ctx, TS);
     // капсули
-    for (const p of pods) drawPod(p);
-    if (R.cutDraw) R.cutDraw(ctx, TS);
+    if (!R.viewG) for (const p of pods) drawPod(p);
+    if (R.cutDraw && !R.viewG) R.cutDraw(ctx, TS);
     ctx.restore();
 
     // освітлення
     if (S.lighting) drawLighting(g, map, x0, y0, x1, y1, ox, oy, z);
     // погода
     drawWeather(g);
-    if (RW.Disasters) RW.Disasters.drawScreen(ctx, W, H);
+    if (RW.Disasters && !R.viewG) RW.Disasters.drawScreen(ctx, W, H);
     // оверлей UI у світових координатах
     ctx.save(); ctx.translate(ox, oy); ctx.scale(cam.zoom, cam.zoom);
-    if (RW.UI && RW.UI.drawWorldOverlay) RW.UI.drawWorldOverlay(ctx);
+    if (RW.UI && RW.UI.drawWorldOverlay && !R.viewG) RW.UI.drawWorldOverlay(ctx);
     // плаваючий текст
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = 'bold 11px sans-serif';
-    for (const t of texts) { const a = 1 - t.t / 55; ctx.globalAlpha = Math.min(1, a * 1.6); ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillText(t.txt, t.x * TS + 1, t.y * TS + 1); ctx.fillStyle = t.color; ctx.fillText(t.txt, t.x * TS, t.y * TS); }
+    if (!R.viewG) for (const t of texts) { const a = 1 - t.t / 55; ctx.globalAlpha = Math.min(1, a * 1.6); ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillText(t.txt, t.x * TS + 1, t.y * TS + 1); ctx.fillStyle = t.color; ctx.fillText(t.txt, t.x * TS, t.y * TS); }
     ctx.globalAlpha = 1;
     ctx.restore();
     // спалах блискавки
