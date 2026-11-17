@@ -70,10 +70,16 @@
   }, 250);
   setInterval(() => { if (Sp.providing && Net.state === 'open' && RW.G && RW.G.map && MP.active()) { const s = signature(); if (s !== lastSig) sendInit(); } }, 3000);
 
+  let badge = null;
+  function setBadge(on) {
+    if (!on) { if (badge) { badge.remove(); badge = null; } return; }
+    if (!badge) { badge = document.createElement('div'); badge.className = 'spec-badge'; document.body.appendChild(badge); }
+    badge.innerHTML = '<span class="eye">👁</span> <b>' + (MP.st().peerName || 'Друг').replace(/[<>&]/g, '') + '</b> стежить за вашою колонією';
+  }
   function onReq(on) {
-    if (!on) { Sp.providing = false; MP.dirty && (MP.dirty.card = true); return; }
+    if (!on) { if (Sp.providing) RW.UI.toast('👁 ' + MP.st().peerName + ' припинив(ла) стежити', 'info'); Sp.providing = false; setBadge(false); MP.dirty && (MP.dirty.card = true); return; }
     if (!Sp.allow) { send({ t: 'specNo' }); return; }
-    Sp.providing = true; sent.clear(); sentA.clear(); lastFull = performance.now(); sendInit();
+    Sp.providing = true; setBadge(true); sent.clear(); sentA.clear(); lastFull = performance.now(); sendInit();
     RW.UI.toast('👁 ' + MP.st().peerName + ' дивиться вашу колонію (лише перегляд)', 'info'); MP.dirty && (MP.dirty.card = true);
   }
 
@@ -161,7 +167,7 @@
     window.addEventListener('contextmenu', blockMouse, true); window.addEventListener('dblclick', blockMouse, true); window.addEventListener('click', blockMouse, true);
     MP.dirty && (MP.dirty.card = true);
   }
-  const CAMK = /^(KeyW|KeyA|KeyS|KeyD|ArrowUp|ArrowDown|ArrowLeft|ArrowRight|ShiftLeft|ShiftRight|Equal|Minus|NumpadAdd|NumpadSubtract)$/;
+  const CAMK = /^(KeyW|KeyA|KeyS|KeyD|ArrowUp|ArrowDown|ArrowLeft|ArrowRight|ShiftLeft|ShiftRight|Enter|NumpadEnter|Equal|Minus|NumpadAdd|NumpadSubtract)$/;
   function blockKeys(e) {
     if (e.code === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); Sp.stop(); return; }
     if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
@@ -188,11 +194,11 @@
     Sp.loading = true; send({ t: 'specReq', on: true }); RW.UI.toast('👁 Завантажуємо колонію друга…', 'info');
     setTimeout(() => { if (Sp.loading) { Sp.loading = false; RW.UI.toast('Друг не відповів (перевірте зʼєднання)', 'bad'); } }, 12000);
   };
-  Sp.setAllow = v => { Sp.allow = !!v; if (!v && Sp.providing) { Sp.providing = false; send({ t: 'specNo' }); } };
+  Sp.setAllow = v => { Sp.allow = !!v; if (!v && Sp.providing) { Sp.providing = false; setBadge(false); send({ t: 'specNo' }); } };
 
   // ---------- повідомлення ----------
   Net.on((k, m) => {
-    if (k === 'close') { if (Sp.viewing || Sp.loading) { Sp.stop(true); RW.UI && RW.UI.toast('Зʼєднання втрачено — повернулись у свою колонію', 'bad'); } Sp.providing = false; return; }
+    if (k === 'close') { if (Sp.viewing || Sp.loading) { Sp.stop(true); RW.UI && RW.UI.toast('Зʼєднання втрачено — повернулись у свою колонію', 'bad'); } Sp.providing = false; setBadge(false); return; }
     if (k !== 'msg') return;
     switch (m.t) {
       case 'specReq': onReq(!!m.on); break;

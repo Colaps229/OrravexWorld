@@ -1,7 +1,7 @@
 {
- "version": "0.7.6",
- "build": "mwl16mr4",
- "date": "2026-11-17T18:33:43.600Z",
+ "version": "0.7.7",
+ "build": "mwl1k5k0",
+ "date": "2026-11-17T18:44:14.496Z",
  "files": [
   "README.md",
   "css/style.css",
@@ -9,6 +9,7 @@
   "js/ai.js",
   "js/animals_gfx.js",
   "js/audio.js",
+  "js/chat.js",
   "js/combat.js",
   "js/cooking.js",
   "js/cutscene.js",
@@ -42,6 +43,7 @@
   "js/scenes.js",
   "js/spectate.js",
   "js/storage.js",
+  "js/tools.js",
   "js/traders.js",
   "js/ui.js",
   "js/uiext.js",
