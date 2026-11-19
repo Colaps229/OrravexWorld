@@ -104,6 +104,41 @@
         }
         if (rnd() < 0.06 && biomeKey !== 'tundra') wrapDraw(px, py - 6, 3, (X, Y) => { x.globalAlpha = 0.9; x.fillStyle = '#d8c98a'; x.beginPath(); x.ellipse(X, Y, 1, 1.9, 0, 0, 6.3); x.fill(); }); // колоски
       }
+      // ---- v0.9.10: додатковий ярус деталей ----
+      const dry = biomeKey === 'arid' || biomeKey === 'tundra';
+      // тіні під жмутами
+      for (let k = 0; k < 18; k++) { x.globalAlpha = 0.16; x.fillStyle = '#0a1a06'; wrapDraw(rnd() * TS, rnd() * TS, 5, (X, Y) => { x.beginPath(); x.ellipse(X + 0.8, Y + 0.6, 2.6 + rnd() * 2, 1.1 + rnd() * 0.9, 0, 0, 6.3); x.fill(); }); }
+      // широкі загострені листки різних відтінків
+      const blade = (X, Y, l, lean, w, c0, c1) => {
+        const gr = x.createLinearGradient(X, Y, X + lean, Y - l); gr.addColorStop(0, c0); gr.addColorStop(1, c1); x.fillStyle = gr;
+        x.beginPath(); x.moveTo(X - w / 2, Y); x.quadraticCurveTo(X - w / 2 + lean * 0.25, Y - l * 0.6, X + lean, Y - l); x.quadraticCurveTo(X + w / 2 + lean * 0.35, Y - l * 0.55, X + w / 2, Y); x.closePath(); x.fill();
+      };
+      for (let k = 0; k < 44; k++) {
+        const kind = rnd(); const l = 4 + rnd() * 6, lean = (rnd() - 0.5) * 5, w = 1.1 + rnd() * 1.1;
+        let c0 = U.shade(base, -0.4), c1;
+        if (kind < 0.12) c1 = dry ? '#c8b46a' : '#c9c96a';            // суха/жовта трава
+        else if (kind < 0.30) c1 = dry ? '#8c8a58' : '#5fae86';        // синюватий відтінок
+        else if (kind < 0.7) c1 = U.shade(base, 0.38); else c1 = U.shade(base, 0.6);
+        wrapDraw(rnd() * TS, rnd() * TS, 8, (X, Y) => { x.globalAlpha = 0.9; blade(X, Y, l, lean, w, c0, c1); if (rnd() < 0.5) { x.globalAlpha = 0.5; x.strokeStyle = 'rgba(255,255,220,0.8)'; x.lineWidth = 0.4; x.beginPath(); x.moveTo(X, Y - l * 0.2); x.lineTo(X + lean * 0.8, Y - l * 0.92); x.stroke(); } });
+      }
+      // розетки широкого листя (подорожник)
+      for (let k = 0; k < 3; k++) if (rnd() < 0.8) {
+        const px = 4 + rnd() * 24, py = 6 + rnd() * 22, nl = 5 + ((rnd() * 3) | 0), ph = rnd() * 6;
+        wrapDraw(px, py, 8, (X, Y) => { for (let q = 0; q < nl; q++) { const an = ph + q * 6.283 / nl, L = 3.6 + rnd() * 1.6; x.globalAlpha = 0.9; x.fillStyle = U.shade(base, 0.02 + (q % 2) * 0.12); x.beginPath(); x.ellipse(X + Math.cos(an) * L * 0.55, Y + Math.sin(an) * L * 0.38, L * 0.62, 1.15, an, 0, 6.3); x.fill(); x.strokeStyle = 'rgba(210,235,150,0.55)'; x.lineWidth = 0.35; x.beginPath(); x.moveTo(X, Y); x.lineTo(X + Math.cos(an) * L * 1.05, Y + Math.sin(an) * L * 0.72); x.stroke(); } x.fillStyle = U.shade(base, -0.3); x.beginPath(); x.arc(X, Y, 0.9, 0, 6.3); x.fill(); });
+      }
+      // опале листя, мох, дрібна галька
+      for (let k = 0; k < 4; k++) if (rnd() < 0.6) wrapDraw(rnd() * TS, rnd() * TS, 3, (X, Y) => { x.globalAlpha = 0.65; x.fillStyle = rnd() < 0.5 ? '#8a6a34' : '#a88a48'; x.beginPath(); x.ellipse(X, Y, 1.5, 0.8, rnd() * 3, 0, 6.3); x.fill(); });
+      for (let k = 0; k < 5; k++) { x.globalAlpha = 0.28; x.fillStyle = '#4a7a2a'; wrapDraw(rnd() * TS, rnd() * TS, 3, (X, Y) => { x.beginPath(); x.arc(X, Y, 1 + rnd() * 1.3, 0, 6.3); x.fill(); }); }
+      // високі стебла з насінням / квіточки
+      if (!dry) for (let k = 0; k < 4; k++) if (rnd() < 0.4) {
+        const px = rnd() * TS, py = 8 + rnd() * 22, hh = 5 + rnd() * 4, c = rnd();
+        wrapDraw(px, py, 4, (X, Y) => { x.globalAlpha = 0.95; x.strokeStyle = '#3f7a2c'; x.lineWidth = 0.8; x.beginPath(); x.moveTo(X, Y); x.quadraticCurveTo(X + 0.8, Y - hh * 0.5, X + 0.4, Y - hh); x.stroke();
+          if (c < 0.45) { x.fillStyle = '#e8dca0'; for (let q = 0; q < 3; q++) { x.beginPath(); x.ellipse(X + 0.4 + (q - 1) * 0.5, Y - hh + q * 1.1, 0.7, 1.2, 0, 0, 6.3); x.fill(); } }
+          else { x.fillStyle = c < 0.75 ? '#ffffff' : U.pick(flowerCols); for (let q = 0; q < 5; q++) { x.beginPath(); x.arc(X + 0.4 + Math.cos(q * 1.257) * 1.3, Y - hh + Math.sin(q * 1.257) * 1.3, 0.85, 0, 6.3); x.fill(); } x.fillStyle = '#f2c63a'; x.beginPath(); x.arc(X + 0.4, Y - hh, 0.7, 0, 6.3); x.fill(); } });
+      }
+      // роса
+      for (let k = 0; k < 10; k++) { x.globalAlpha = 0.5; x.fillStyle = 'rgba(255,255,255,0.9)'; x.fillRect(rnd() * TS, rnd() * TS, 1, 1); }
+      x.globalAlpha = 1;
       // світлі відблиски на кінчиках
       for (let k = 0; k < 26; k++) { x.globalAlpha = 0.55; x.fillStyle = 'rgba(235,255,170,0.9)'; x.fillRect(rnd() * TS, rnd() * TS, 1, 1); }
       x.globalAlpha = 1;
