@@ -1,7 +1,7 @@
 {
- "version": "0.9.5",
- "build": "mwnyjsbg",
- "date": "2026-11-19T19:43:17.020Z",
+ "version": "0.9.6",
+ "build": "mwnyrhd1",
+ "date": "2026-11-19T19:49:16.069Z",
  "files": [
   "README.md",
   "css/style.css",
@@ -36,6 +36,7 @@
   "js/menu.js",
   "js/menufx.js",
   "js/mp.js",
+  "js/mp2.js",
   "js/mpmenu.js",
   "js/nature.js",
   "js/pawn.js",
