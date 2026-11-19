@@ -678,7 +678,7 @@
     el.onmousedown = e => e.stopPropagation();
     el.onclick = e => { const b = e.target.closest('button'); if (!b) return; const k = b.dataset.k; if (k === 'pawn') UI.select({ p: cols[0] }); else { const old = UI.tool; UI.tool = { type: 'desig', kind: k }; applyTool(r); UI.tool = old; } hideBox(); UI.dirty = true; };
   }
-  const isAreaDef = d => d && (d.wall || d.floor || d.conduit || d.cover);
+  const isAreaDef = d => d && (d.wall || d.floor || d.conduit || d.cover || d.area);
   function dragRect() {
     const m = UI.mouse; const d = m.drag; let x0 = Math.min(d.tx, Math.floor(m.fx)), x1 = Math.max(d.tx, Math.floor(m.fx)), y0 = Math.min(d.ty, Math.floor(m.fy)), y1 = Math.max(d.ty, Math.floor(m.fy));
     const t = UI.tool; if (t && t.type === 'build') { if (!isAreaDef(D.bld[t.def])) { x1 = x0; y1 = y0; } else if (D.bld[t.def].wall || D.bld[t.def].conduit) { // лінія

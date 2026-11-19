@@ -472,3 +472,27 @@ select,input[type=text],input[type=number]{background:#10141a;border:1px solid #
 .pf-counts{display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px}.pf-counts em{opacity:.55;font-style:normal}
 #pf-find p{margin:3px 0}
 #pf-text{width:100%;height:90px;box-sizing:border-box;background:#0b0f14;color:#b9c7d6;border:1px solid #2d3946;border-radius:4px;font:10.5px monospace}
+
+/* ---- Душа колоністів (0.9.0) ---- */
+.soul{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.soul-card{background:rgba(255,255,255,.04);border:1px solid #2f3a47;border-radius:8px;padding:7px 9px}
+.sc-h{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.sc-h img{width:26px;height:26px;border-radius:50%}
+.sc-hob{font-size:11px;opacity:.85}.sc-perk{margin-left:auto;color:#ffd24a;font-size:12px;letter-spacing:1px}
+.sc-goal{margin:6px 0 4px;font-size:11.5px}.sc-bar{height:6px;background:#1c242d;border-radius:3px;margin-top:3px;overflow:hidden}.sc-bar i{display:block;height:100%;background:linear-gradient(90deg,#e0a93a,#ffe27a)}
+.sc-mem{display:flex;flex-direction:column;gap:1px;font-size:10.5px;opacity:.8}
+
+/* ---- Оборона (0.9.1) ---- */
+#def-ctl{position:fixed;left:66px;top:100px;z-index:30;background:rgba(14,18,24,.88);border:1px solid #3a4756;border-radius:8px;padding:6px 9px;color:#dfe7ef;font:12px sans-serif;display:flex;flex-direction:column;gap:4px;box-shadow:0 4px 14px #0008}
+#def-ctl .dc-row{display:flex;align-items:center;gap:5px}#def-ctl em{color:#ff6a5a;font-style:normal;font-weight:700;animation:dcb .6s infinite alternate}
+@keyframes dcb{to{opacity:.35}}
+#def-ctl button{background:#26323f;color:#dfe7ef;border:1px solid #3d4b5b;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:11px}#def-ctl button.on{background:#3d6a9c;border-color:#6aa0d8}
+
+/* v0.9.3 — редактор стартових предметів */
+.si-bar{display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap}
+.si-bar input[type=text]{flex:1;min-width:140px}
+.si-list{max-height:58vh;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:4px 14px;padding-right:6px}
+.si-row{display:grid;grid-template-columns:1fr auto auto 64px auto auto;gap:4px;align-items:center;padding:3px 6px;border-radius:6px;background:rgba(255,255,255,.03)}
+.si-row.on{background:rgba(217,165,59,.12);box-shadow:inset 2px 0 0 #d9a53b}
+.si-row input[type=number]{width:64px;text-align:center;padding:3px 4px}
+.si-n{display:flex;align-items:center;gap:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.si-n i{width:10px;height:10px;border-radius:3px;flex:none;border:1px solid rgba(0,0,0,.4)}

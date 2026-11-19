@@ -256,7 +256,7 @@
   };
   function pickRaiderTarget(p) {
     const g = G(); let best = null, bd = 1e9;
-    for (const o of g.pawns) { if (o.faction !== 'colony' || o.dead) continue; let d = dist(p, o); if (o.downed) d += 6; if (d < bd) { bd = d; best = o; } }
+    for (const o of g.pawns) { if (o.faction !== 'colony' || o.dead || o.hidden) continue; let d = dist(p, o); if (o.downed) d += 6; if (d < bd) { bd = d; best = o; } }
     for (const a of g.animals) { if (a.faction !== 'colony' || a.dead) continue; const d = dist(p, a) + 4; if (d < bd) { bd = d; best = a; } }
     if (best && bd < 60) return best;
     // турелі/будівлі

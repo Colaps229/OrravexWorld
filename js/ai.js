@@ -763,7 +763,7 @@
     const spot = workSpot(p, bp.x, bp.y, bp.w, bp.h); if (!spot) return FAIL;
     if (j.stage === 3) { const r = moveTo(p, spot[0], spot[1]); if (r === 'fail') return FAIL; if (r === 'arrived') { j.stage = 4; p.moving = false; } return; }
     p.moving = false; faceTo(p, bp.x + bp.w / 2, bp.y + bp.h / 2);
-    const rate = p.workSpeed('construction');
+    const rate = p.workSpeed('construction') * (RW.D.BUILD_MUL || 1);
     bp.work += rate; p.gainXp('construction', 0.09);
     if ((G().tick & 15) === 0 && RW.R) RW.R.fx.spark(bp.x + bp.w / 2, bp.y + bp.h / 2);
     if ((G().tick & 31) === 0 && RW.A) RW.A.sfx('hammer');
@@ -782,7 +782,7 @@
     const spot = workSpot(p, b.x, b.y, b.w, b.h); if (!spot) return FAIL;
     if (j.stage === 0) { const r = moveTo(p, spot[0], spot[1]); if (r === 'fail') return FAIL; if (r === 'arrived') { j.stage = 1; p.moving = false; } return; }
     p.moving = false; faceTo(p, b.x + b.w / 2, b.y + b.h / 2);
-    b.dprog = (b.dprog || 0) + p.workSpeed('construction'); p.gainXp('construction', 0.05);
+    b.dprog = (b.dprog || 0) + p.workSpeed('construction') * (RW.D.BUILD_MUL || 1); p.gainXp('construction', 0.05);
     if ((g.tick & 31) === 0 && RW.A) RW.A.sfx('hammer');
     if (b.dprog >= Math.max(40, b.def.work * 0.5)) {
       const refund = b.def.refund || b.def.cost;
@@ -1019,7 +1019,7 @@
 
   AI.jobLabel = function (p) {
     if (p.dead) return 'Мертвий';
-    if (p.mental) return ({ wander: 'Блукає в розпачі', binge: 'Обжирається', hide: 'Ховається', insult: 'Ображає всіх', fight: 'Б\'ється', berserk: 'Берсерк!', fire: 'Підпалює' })[p.mental.type] || 'Зрив';
+    if (p.mental) return ({ wander: 'Блукає в розпачі', binge: 'Обжирається', hide: 'Ховається', insult: 'Ображає всіх', fight: 'Б\'ється', berserk: 'Берсерк!', fire: 'Підпалює', duel: p.mental.friendly ? 'Дружня бійка' : 'Дуель' })[p.mental.type] || 'Зрив';
     if (p.downed) return p.inBed ? 'Лежить у ліжку' : 'Без свідомості';
     if (p.drafted) return 'Призваний до бою';
     if (p.combatTarget) return 'Б\'ється';

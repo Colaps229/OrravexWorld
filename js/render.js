@@ -266,7 +266,7 @@
   R.draw = function () { const t0 = performance.now(); drawFrame(); R.drawMs += (performance.now() - t0 - R.drawMs) * 0.25; };
   // Малює всі вже побудовані чанки навколо екрана (з запасом M) в окреме полотно, початок координат — ціле число пікселів пристрою
   function buildGroundCache(map, cam, cz, ox, oy) {
-    const cw0 = canvas.width, ch0 = canvas.height, M = Math.round(Math.max(96, 300 * dpr));
+    const cw0 = canvas.width, ch0 = canvas.height, M = Math.round(Math.max(160, 450 * dpr));
     if (!gc) { gc = { cv: document.createElement('canvas') }; gc.cx = gc.cv.getContext('2d', { alpha: false }); gc.inc = new Map(); }
     if (gc.cv.width !== cw0 + 2 * M || gc.cv.height !== ch0 + 2 * M) { gc.cv.width = cw0 + 2 * M; gc.cv.height = ch0 + 2 * M; }
     const x = gc.cx, zs = cz * dpr, ox0 = Math.round(ox * dpr), oy0 = Math.round(oy * dpr);
@@ -298,7 +298,7 @@
     const x1 = Math.min(map.w - 1, Math.ceil((W - ox) / z)), y1 = Math.min(map.h - 1, Math.ceil((H - oy) / z));
     ctx.imageSmoothingEnabled = cam.zoom < 0.9 || cam.zoom > 1.6 ? true : false;
     // чанки
-    const tChunks = performance.now(); let staleBuilt = 0;
+    const tChunks = performance.now(); let staleBuilt = 0, newBuilt = 0;
     R.view = [x0 >> 4, y0 >> 4, x1 >> 4, y1 >> 4];
     // кеш землі: лише коли віддалено (чанки стискаються) і масштаб стабільний
     const cz = cam.zoom; R.zStable = cz === R.zLast ? (R.zStable || 0) + 1 : 0; R.zLast = cz;
@@ -308,7 +308,10 @@
     if (gcOk && (Math.abs(ddx) > gc.M || Math.abs(ddy) > gc.M)) gcOk = false;
     for (let cy = y0 >> 4; cy <= y1 >> 4; cy++) for (let cx = x0 >> 4; cx <= x1 >> 4; cx++) {
       const key = cy * 64 + cx; let ch = chunks.get(key);
-      if (!ch || map.dirtyChunks.has(key)) { buildChunk(map, cx, cy); map.dirtyChunks.delete(key); ch = chunks.get(key); }
+      if (!ch || map.dirtyChunks.has(key)) {
+        if (newBuilt >= 4 && !ch) { gcOk = false; continue; } // не будуємо багато чанків за один кадр — без фризів при віддаленні
+        buildChunk(map, cx, cy); newBuilt++; map.dirtyChunks.delete(key); ch = chunks.get(key);
+      }
       else if (ch.stale && (staleBuilt === 0 || performance.now() - tChunks < 5)) { buildChunk(map, cx, cy); staleBuilt++; }
       if (gcOk && gc.inc.get(key) !== ch.v) gcOk = false;
       if (!useGc) ctx.drawImage(ch.c, cx * 16 * TS, cy * 16 * TS);
@@ -390,7 +393,7 @@
     for (const b of map.buildings) { if (b.decon && b.x >= x0 - 2 && b.x <= x1 + 2 && b.y >= y0 - 2 && b.y <= y1 + 2) drawDesig(b.x, b.y, 'decon'); }
     PF.m('draw:збір будівель/рослин');
     // істоти
-    if (!OFF.pawns) for (const p of g.pawns) { if (p.x < x0 - 2 || p.x > x1 + 2 || p.y < y0 - 2 || p.y > y1 + 2) continue; ents.push({ y: p.y, k: 'p', p }); }
+    if (!OFF.pawns) for (const p of g.pawns) { if (p.hidden || p.x < x0 - 2 || p.x > x1 + 2 || p.y < y0 - 2 || p.y > y1 + 2) continue; ents.push({ y: p.y, k: 'p', p }); }
     if (!OFF.animals) for (const a of g.animals) { if (a.x < x0 - 2 || a.x > x1 + 2 || a.y < y0 - 2 || a.y > y1 + 2) continue; ents.push({ y: a.y, k: 'a', a }); }
     ents.sort((a, b) => a.y - b.y); PF.m('draw:сортування');
     for (const e of ents) {
@@ -516,6 +519,7 @@
     const spr = GFX.bldSprite(b.key, b.w, b.h); const px = b.x * TS, py = b.y * TS; const d = b.def; const t = R.time;
     ctx.drawImage(spr, px, py);
     const cx = px + b.w * TS / 2, cy = py + b.h * TS / 2; const active = g.map.isActive(b);
+    if (d.drawX) d.drawX(ctx, b, px, py, t, g);
     if (d.id === 'campfire' || d.id === 'torch') {
       if (b.fuel > 0) { const fl = 1 + Math.sin(t * 0.4 + b.x) * 0.15; flame(cx, cy + (d.id === 'torch' ? -8 : 0), d.id === 'torch' ? 0.55 : 1, fl, b.x * 7); if (Math.random() < 0.05) fx.smoke(cx / TS, cy / TS - 0.3, '#555'); }
       else if (d.id === 'campfire') { ctx.fillStyle = 'rgba(30,20,10,0.5)'; ctx.beginPath(); ctx.ellipse(cx, cy + 2, 8, 4, 0, 0, 6.3); ctx.fill(); }

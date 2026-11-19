@@ -11,7 +11,7 @@
   M.cfg = null; M.screen = 'main'; M.ci = 0; M.fromGame = false;
 
   const newCfg = () => ({ scenario: 'crash', difficulty: 'normal', storyteller: 'orest', seed: (Math.random() * 1e9) | 0, planetSeed: (Math.random() * 1e9) | 0, loc: null, tempBias: 0, biome: 'temperate', size: 'medium', mountain: 0.5, water: 0.45, trees: 0.6, colonists: [] });
-  const A = {};
+  const A = {}; M.A = A;
 
   M.init = function () {
     bg = $('menubg'); bctx = bg.getContext('2d'); resizeBg(); window.addEventListener('resize', resizeBg);
@@ -187,8 +187,11 @@
     for (const s of gStars) { x.globalAlpha = 0.45 + 0.55 * Math.abs(Math.sin(gT * 0.001 + s[3])); x.fillStyle = '#fff'; x.fillRect(s[0] / GS * CW, s[1], s[2], s[2]); } x.globalAlpha = 1;
     const sun = x.createRadialGradient(GS * 0.04, GS * 0.04, 2, GS * 0.04, GS * 0.04, GS * 0.5); sun.addColorStop(0, 'rgba(255,240,200,0.9)'); sun.addColorStop(0.1, 'rgba(255,210,140,0.35)'); sun.addColorStop(1, 'rgba(255,200,120,0)'); x.fillStyle = sun; x.fillRect(0, 0, CW, GS);
     x.save(); x.translate(OX, 0);
-    { const wide = (gst.zoom || 1) > 1.12; if (wide) { gview.W = Math.min(620, Math.floor(Math.sqrt(520000 * GS / CW))); gview.WX = Math.round(gview.W * CW / GS); } else { gview.W = 620; gview.WX = 620; } }
-    RW.Planet.render(gview, planet, gst, gT); if (gview.WX > gview.W) x.drawImage(gview.c, -OX, 0, CW, GS); else x.drawImage(gview.c, 0, 0, GS, GS);
+    { const k = M.gScale || (M.gScale = 1); const wide = (gst.zoom || 1) > 1.12; if (wide) { gview.W = Math.max(240, Math.round(Math.min(620, Math.floor(Math.sqrt(520000 * GS / CW))) * k)); gview.WX = Math.round(gview.W * CW / GS); } else { gview.W = Math.max(240, Math.round(620 * k)); gview.WX = gview.W; } }
+    // самонастройка: глобус рахується на процесорі — тримаємо ≈12 мс на кадр, щоб не гальмувати
+    const tR = performance.now(); x.imageSmoothingEnabled = true;
+    RW.Planet.render(gview, planet, gst, gT); { const ms = performance.now() - tR; M.gMs = M.gMs ? M.gMs * 0.8 + ms * 0.2 : ms; if (M.gMs > 14 && M.gScale > 0.39) M.gScale = Math.max(0.38, M.gScale * 0.93); else if (M.gMs < 6 && M.gScale < 1) M.gScale = Math.min(1, M.gScale * 1.02); }
+    if (gview.WX > gview.W) x.drawImage(gview.c, -OX, 0, CW, GS); else x.drawImage(gview.c, 0, 0, GS, GS);
     // маркер
     const c = M.cfg; if (c.loc) {
       const pr = RW.Planet.project(gst, GS, c.loc.lat, c.loc.lon);

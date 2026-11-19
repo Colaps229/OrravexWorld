@@ -86,17 +86,26 @@
     const grass = (x, base, rnd, v) => {
       // дрібний ґрунт між травою
       for (let k = 0; k < 10; k++) { x.fillStyle = 'rgba(40,28,14,0.12)'; wrapDraw(rnd() * TS, rnd() * TS, 3, (X, Y) => { x.beginPath(); x.ellipse(X, Y, 1 + rnd() * 2, 0.8 + rnd(), 0, 0, 6.3); x.fill(); }); }
-      // жмути стебел
-      for (let k = 0; k < 38; k++) {
-        const px = rnd() * TS, py = rnd() * TS, n = 2 + ((rnd() * 3) | 0), tone = rnd();
+      // плями світлішої й темнішої трави (м'яка варіація кольору)
+      for (let k = 0; k < 7; k++) { const dark = rnd() < 0.5; x.fillStyle = dark ? 'rgba(10,30,6,0.13)' : 'rgba(210,240,130,0.10)'; wrapDraw(rnd() * TS, rnd() * TS, 9, (X, Y) => { x.beginPath(); x.ellipse(X, Y, 3 + rnd() * 5, 2 + rnd() * 3.5, rnd() * 3, 0, 6.3); x.fill(); }); }
+      // нижній ярус: короткі темні стебла (глибина)
+      for (let k = 0; k < 46; k++) { const px = rnd() * TS, py = rnd() * TS, l = 1.8 + rnd() * 2.4; wrapDraw(px, py, 4, (X, Y) => { x.strokeStyle = U.shade(base, -0.38); x.globalAlpha = 0.55; x.lineWidth = 1; x.beginPath(); x.moveTo(X, Y); x.lineTo(X + (rnd() - 0.5) * 1.6, Y - l); x.stroke(); }); }
+      // основні жмути: стебла з градієнтом від темного кореня до світлого кінчика
+      for (let k = 0; k < 58; k++) {
+        const px = rnd() * TS, py = rnd() * TS, n = 3 + ((rnd() * 4) | 0), tone = rnd(), tall = rnd() < 0.18 ? 1.7 : 1;
         for (let b = 0; b < n; b++) {
-          const l = 2.6 + rnd() * 4.2, lean = (rnd() - 0.5) * 2.6, ox0 = px + (b - n / 2) * 1.2;
-          wrapDraw(ox0, py, 5, (X, Y) => {
-            x.strokeStyle = tone < 0.33 ? U.shade(base, -0.3) : tone < 0.72 ? U.shade(base, 0.16) : U.shade(base, 0.34); x.globalAlpha = 0.8; x.lineWidth = 1;
-            x.beginPath(); x.moveTo(X, Y); x.quadraticCurveTo(X + lean * 0.3, Y - l * 0.6, X + lean, Y - l); x.stroke();
+          const l = (3 + rnd() * 5) * tall, lean = (rnd() - 0.5) * 3.4 + (b - n / 2) * 0.55, ox0 = px + (b - n / 2) * 1.05;
+          wrapDraw(ox0, py, 7, (X, Y) => {
+            const mid = tone < 0.3 ? U.shade(base, -0.12) : tone < 0.7 ? U.shade(base, 0.12) : U.shade(base, 0.26), tip = tone < 0.3 ? U.shade(base, 0.08) : tone < 0.7 ? U.shade(base, 0.32) : U.shade(base, 0.5);
+            x.globalAlpha = 0.92; x.lineWidth = 1.1; x.strokeStyle = U.shade(base, -0.34); x.beginPath(); x.moveTo(X, Y); x.lineTo(X + lean * 0.12, Y - l * 0.35); x.stroke();
+            x.strokeStyle = mid; x.beginPath(); x.moveTo(X + lean * 0.12, Y - l * 0.35); x.quadraticCurveTo(X + lean * 0.35, Y - l * 0.7, X + lean * 0.7, Y - l * 0.82); x.stroke();
+            x.lineWidth = 0.9; x.strokeStyle = tip; x.beginPath(); x.moveTo(X + lean * 0.7, Y - l * 0.82); x.lineTo(X + lean, Y - l); x.stroke();
           });
         }
+        if (rnd() < 0.06 && biomeKey !== 'tundra') wrapDraw(px, py - 6, 3, (X, Y) => { x.globalAlpha = 0.9; x.fillStyle = '#d8c98a'; x.beginPath(); x.ellipse(X, Y, 1, 1.9, 0, 0, 6.3); x.fill(); }); // колоски
       }
+      // світлі відблиски на кінчиках
+      for (let k = 0; k < 26; k++) { x.globalAlpha = 0.55; x.fillStyle = 'rgba(235,255,170,0.9)'; x.fillRect(rnd() * TS, rnd() * TS, 1, 1); }
       x.globalAlpha = 1;
       if (biomeKey !== 'arid' && biomeKey !== 'tundra') {
         for (let k = 0; k < 2; k++) if (rnd() < 0.5) { // конюшина

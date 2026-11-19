@@ -102,7 +102,7 @@
   // ---- панель шарів ----
   Ly.bar = function () {
     let el = document.getElementById('layerbar'); if (el) return; el = document.createElement('div'); el.id = 'layerbar';
-    const M = [[null, '🗺', 'Звичайний вигляд'], ['roof', '🏠', 'Дахи'], ['power', '⚡', 'Енергомережа'], ['temp', '🌡', 'Температура'], ['beauty', '✨', 'Краса']];
+    const M = [[null, '🗺', 'Звичайний вигляд'], ['roof', '🏠', 'Дахи'], ['power', '⚡', 'Енергомережа'], ['temp', '🌡', 'Температура'], ['beauty', '✨', 'Краса'], ['rooms', '🏷', 'Кімнати']];
     el.innerHTML = M.map(m => '<button data-m="' + (m[0] || '') + '" title="' + m[2] + '">' + m[1] + '</button>').join('');
     el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; Ly.mode = b.dataset.m || null; Ly.sync(); });
     document.body.appendChild(el); Ly.sync();
@@ -111,7 +111,7 @@
   Ly.install = function () {
     const UI = RW.UI; Ly.bar();
     UI.actions.pickRoof = el => { UI.tool = { type: 'roof', kind: el.dataset.kind }; Ly.mode = 'roof'; Ly.sync(); };
-    window.addEventListener('keydown', e => { if (e.code === 'KeyL' && !e.ctrlKey && !/INPUT|TEXTAREA/.test((e.target || {}).tagName || '')) { const o = [null, 'roof', 'power', 'temp', 'beauty']; Ly.mode = o[(o.indexOf(Ly.mode) + 1) % o.length]; Ly.sync(); } });
+    window.addEventListener('keydown', e => { if (e.code === 'KeyL' && !e.ctrlKey && !/INPUT|TEXTAREA/.test((e.target || {}).tagName || '')) { const o = [null, 'roof', 'power', 'temp', 'beauty', 'rooms']; Ly.mode = o[(o.indexOf(Ly.mode) + 1) % o.length]; Ly.sync(); } });
   };
   Ly.cards = function (tt) {
     let h = ''; for (const k in ROOF) { const R = ROOF[k]; h += '<div class="acard ' + (tt && tt.type === 'roof' && tt.kind === k ? 'on' : '') + '" data-act="pickRoof" data-kind="' + k + '" title="' + R.name + ': ' + R.desc + '"><div class="ai">' + R.ico + '</div><div class="an">' + R.name + '</div><div class="ac">' + Object.keys(R.cost).map(c => R.cost[c] + ' ' + D.items[c].name).join(', ') + '</div></div>'; }
