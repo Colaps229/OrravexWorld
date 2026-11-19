@@ -609,6 +609,10 @@
     const OL = 'rgba(14,9,6,0.88)';
     const oval = (cx, cy, rx, ry, fill, lw) => { ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, 6.3); ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = OL; ctx.lineWidth = lw || 0.75; ctx.stroke(); };
     const box = (x0, y0, w0, h0, fill, lw) => { ctx.fillStyle = fill; ctx.fillRect(x0, y0, w0, h0); ctx.strokeStyle = OL; ctx.lineWidth = lw || 0.7; ctx.strokeRect(x0, y0, w0, h0); };
+    const rrp = (x0, y0, w0, h0, r) => { ctx.moveTo(x0 + r, y0); ctx.arcTo(x0 + w0, y0, x0 + w0, y0 + h0, r); ctx.arcTo(x0 + w0, y0 + h0, x0, y0 + h0, r); ctx.arcTo(x0, y0 + h0, x0, y0, r); ctx.arcTo(x0, y0, x0 + w0, y0, r); ctx.closePath(); };
+    const rbox = (cx, cy, hw, hh, fill, lw) => { ctx.beginPath(); rrp(cx - hw, cy - hh, hw * 2, hh * 2, Math.min(hw, hh) * 0.85); ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = OL; ctx.lineWidth = lw || 0.75; ctx.stroke(); };
+    const torsoPath = tw => { ctx.moveTo(-tw * 0.78, -5.6); ctx.quadraticCurveTo(-tw, -5.6, -tw, -3.8); ctx.lineTo(-tw * 0.86, 3.2); ctx.quadraticCurveTo(-tw * 0.84, 4.4, -tw * 0.6, 4.4); ctx.lineTo(tw * 0.6, 4.4); ctx.quadraticCurveTo(tw * 0.84, 4.4, tw * 0.86, 3.2); ctx.lineTo(tw, -3.8); ctx.quadraticCurveTo(tw, -5.6, tw * 0.78, -5.6); ctx.closePath(); };
+    const headPath = () => { ctx.moveTo(-4.7, -8.4); ctx.bezierCurveTo(-4.7, -12.9, 4.7, -12.9, 4.7, -8.4); ctx.bezierCurveTo(4.8, -5.8, 3, -2.9, 0, -2.5); ctx.bezierCurveTo(-3, -2.9, -4.8, -5.8, -4.7, -8.4); ctx.closePath(); };
     const lin = (x0, y0, x1, y1, c0, c1) => { const gr = ctx.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, c0); gr.addColorStop(1, c1); return gr; };
     // ноги та взуття
     const pants = look.pants, boot = '#2a211c';
@@ -627,12 +631,12 @@
     const w = p.equip && p.equip.weapon ? D.items[p.equip.weapon] : null;
     const aiming = (p.aim > 0 || p.drafted && p.target || p.combatTarget || p.faction === 'enemy') && w && w.w.kind === 'ranged';
     if (!side) {
-      for (const sg of [-1, 1]) { const ax = sg * 6.4 * bw, ay = -2.4 + swing * 0.35 * -sg; oval(ax, ay, 2.1, 3, lin(ax - 2, ay, ax + 2, ay, U.shade(shirt, sg < 0 ? 0.12 : -0.12), U.shade(shirt, sg < 0 ? -0.15 : 0.1))); ctx.fillStyle = U.shade(shirt, -0.32); ctx.fillRect(ax - 1.9, ay + 1.9, 3.8, 0.9); ctx.strokeStyle = U.shade(shirt, -0.3); ctx.globalAlpha = 0.4; ctx.lineWidth = 0.4; ctx.beginPath(); ctx.moveTo(ax - sg * 0.3, ay - 2.6); ctx.lineTo(ax - sg * 0.6, ay + 1.8); ctx.stroke(); ctx.globalAlpha = 1; oval(sg * 6.9 * bw, ay + 3.3, 1.7, 1.7, look.skin, 0.6); ctx.strokeStyle = 'rgba(0,0,0,0.28)'; ctx.lineWidth = 0.35; ctx.beginPath(); ctx.moveTo(sg * 6.9 * bw - 0.7, ay + 3.9); ctx.lineTo(sg * 6.9 * bw + 0.7, ay + 3.9); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.fillRect(sg * 6.9 * bw - 0.9, ay + 2.4, 0.9, 0.7); }
+      for (const sg of [-1, 1]) { const ax = sg * 6.4 * bw, ay = -2.4 + swing * 0.35 * -sg; rbox(ax, ay, 2, 3.2, lin(ax - 2, ay, ax + 2, ay, U.shade(shirt, sg < 0 ? 0.12 : -0.12), U.shade(shirt, sg < 0 ? -0.15 : 0.1))); ctx.fillStyle = U.shade(shirt, -0.32); ctx.fillRect(ax - 1.9, ay + 1.9, 3.8, 0.9); ctx.strokeStyle = U.shade(shirt, -0.3); ctx.globalAlpha = 0.4; ctx.lineWidth = 0.4; ctx.beginPath(); ctx.moveTo(ax - sg * 0.3, ay - 2.6); ctx.lineTo(ax - sg * 0.6, ay + 1.8); ctx.stroke(); ctx.globalAlpha = 1; rbox(sg * 6.9 * bw, ay + 3.4, 1.45, 1.5, look.skin, 0.6); ctx.strokeStyle = 'rgba(0,0,0,0.28)'; ctx.lineWidth = 0.35; ctx.beginPath(); ctx.moveTo(sg * 6.9 * bw - 0.7, ay + 3.9); ctx.lineTo(sg * 6.9 * bw + 0.7, ay + 3.9); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.fillRect(sg * 6.9 * bw - 0.9, ay + 2.4, 0.9, 0.7); }
     }
-    ctx.beginPath(); ctx.ellipse(0, -1, trx, 5.4, 0, 0, 6.3); ctx.fillStyle = lin(-trx, -6, trx, 4, U.shade(shirt, 0.2), U.shade(shirt, -0.26)); ctx.fill(); ctx.strokeStyle = OL; ctx.lineWidth = 0.8; ctx.stroke();
+    ctx.beginPath(); torsoPath(trx); ctx.fillStyle = lin(-trx, -6, trx, 4, U.shade(shirt, 0.2), U.shade(shirt, -0.26)); ctx.fill(); ctx.strokeStyle = OL; ctx.lineWidth = 0.8; ctx.stroke();
     ctx.fillStyle = 'rgba(255,255,255,0.14)'; ctx.beginPath(); ctx.ellipse(-trx * 0.35, -3, trx * 0.3, 1.8, -0.3, 0, 6.3); ctx.fill();
     { // складки тканини, шви, тінь від голови, нижній край
-      ctx.save(); ctx.beginPath(); ctx.ellipse(0, -1, trx, 5.4, 0, 0, 6.3); ctx.clip();
+      ctx.save(); ctx.beginPath(); torsoPath(trx); ctx.clip();
       ctx.strokeStyle = U.shade(shirt, -0.3); ctx.globalAlpha = 0.4; ctx.lineWidth = 0.5;
       ctx.beginPath(); ctx.moveTo(-trx * 0.6, -2.6); ctx.quadraticCurveTo(-trx * 0.2, -0.6, -trx * 0.5, 2.4); ctx.moveTo(trx * 0.55, -3); ctx.quadraticCurveTo(trx * 0.25, -0.4, trx * 0.5, 2.6); ctx.moveTo(-trx * 0.1, 0.6); ctx.quadraticCurveTo(trx * 0.15, 1.6, trx * 0.4, 1.2); ctx.stroke();
       ctx.globalAlpha = 0.28; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(0, -5.4, trx * 0.7, 2, 0, 0, 6.3); ctx.fill();
@@ -650,13 +654,13 @@
     if (face === 0) { ctx.fillStyle = look.skin; ctx.beginPath(); ctx.moveTo(-1.9, -5.3); ctx.lineTo(0, -2.9); ctx.lineTo(1.9, -5.3); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 0.5; ctx.stroke(); ctx.strokeStyle = U.shade(shirt, 0.25); ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(-2.3, -5.4); ctx.lineTo(0, -2.7); ctx.lineTo(2.3, -5.4); ctx.stroke(); ctx.strokeStyle = U.shade(shirt, -0.35); ctx.lineWidth = 0.4; ctx.stroke(); }
     // руки збоку
     ctx.fillStyle = look.skin;
-    if (side) { const hx2 = 1.5 * dir - swing * 0.4 * dir; oval(hx2 * 0.8, -1.4, 1.7, 2.8, lin(hx2 - 1, -3, hx2 + 1, 1, U.shade(shirt, 0.1), U.shade(shirt, -0.2)), 0.7); oval(hx2, 1.2, 1.7, 1.7, look.skin, 0.6); }
+    if (side) { const hx2 = 1.5 * dir - swing * 0.4 * dir; rbox(hx2 * 0.8, -1.4, 1.6, 3, lin(hx2 - 1, -3, hx2 + 1, 1, U.shade(shirt, 0.1), U.shade(shirt, -0.2)), 0.7); rbox(hx2, 1.3, 1.4, 1.5, look.skin, 0.6); }
     // голова
     const hx = face === 1 ? 1.2 : face === 3 ? -1.2 : 0;
     ctx.save(); ctx.translate(hx, 0);
     ctx.fillStyle = U.shade(look.skin, -0.22); ctx.fillRect(-1.7, -4.4, 3.4, 2.2);
-    if (face !== 2) { oval(-5.1, -6.9, 1.2, 1.7, U.shade(look.skin, -0.06), 0.6); oval(5.1, -6.9, 1.2, 1.7, U.shade(look.skin, -0.1), 0.6); }
-    ctx.beginPath(); ctx.arc(0, -7.4, 5.4, 0, 6.3); const hg = ctx.createRadialGradient(-1.8, -9.6, 0.6, 0, -7.4, 6); hg.addColorStop(0, U.shade(look.skin, 0.2)); hg.addColorStop(0.6, look.skin); hg.addColorStop(1, U.shade(look.skin, -0.2)); ctx.fillStyle = hg; ctx.fill(); ctx.strokeStyle = OL; ctx.lineWidth = 0.8; ctx.stroke();
+    if (face !== 2) { oval(-4.7, -7, 1, 1.6, U.shade(look.skin, -0.06), 0.6); oval(4.7, -7, 1, 1.6, U.shade(look.skin, -0.1), 0.6); }
+    ctx.beginPath(); headPath(); const hg = ctx.createRadialGradient(-1.8, -9.6, 0.6, 0, -7.4, 6); hg.addColorStop(0, U.shade(look.skin, 0.2)); hg.addColorStop(0.6, look.skin); hg.addColorStop(1, U.shade(look.skin, -0.2)); ctx.fillStyle = hg; ctx.fill(); ctx.strokeStyle = OL; ctx.lineWidth = 0.8; ctx.stroke();
     hair(ctx, look.hairStyle, look.hair, face);
     if (look.hairStyle) { // пасма волосся
       const hr = U.rng((p.id | 0) * 97 + 13); ctx.save(); ctx.lineCap = 'round';
