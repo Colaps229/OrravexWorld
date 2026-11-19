@@ -496,3 +496,27 @@ select,input[type=text],input[type=number]{background:#10141a;border:1px solid #
 .si-row input[type=number]{width:64px;text-align:center;padding:3px 4px}
 .si-n{display:flex;align-items:center;gap:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .si-n i{width:10px;height:10px;border-radius:3px;flex:none;border:1px solid rgba(0,0,0,.4)}
+
+/* v0.9.4 — економіка */
+.eco-tabs{display:flex;gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.eco-tabs .btn.on{background:#d9a53b;color:#1a1408}
+.eco-sil{margin-left:auto;font-weight:700;color:#e6e6ee}
+.eco-ev{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.eco-chip{display:inline-block;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,.08);font-size:12px}
+.eco-chip.up{background:rgba(224,88,74,.22)}.eco-chip.dn{background:rgba(122,208,122,.2)}
+.eco-tbl{display:flex;flex-direction:column;gap:3px}
+.eco-r{display:grid;grid-template-columns:26px 1fr 62px 70px minmax(150px,auto);gap:8px;align-items:center;padding:3px 6px;border-radius:6px;background:rgba(255,255,255,.03)}
+.eco-r img{width:24px;height:24px;image-rendering:pixelated}
+.eco-n small{opacity:.6}
+.eco-sp{width:60px;height:18px}
+.eco-p{font-size:11px;opacity:.75;text-align:right}
+.eco-card{display:flex;gap:10px;align-items:center;padding:8px 10px;margin:6px 0;border-radius:10px;background:rgba(255,255,255,.05);border-left:3px solid var(--c,#d9a53b)}
+.eco-card img{width:34px;height:34px;image-rendering:pixelated}
+.eco-ci{flex:1;min-width:0}
+.eco-rw{text-align:right;font-size:13px;white-space:nowrap}
+.eco-ico{font-size:26px}
+.eco-badge{position:absolute;transform:translate(-50%,-50%);font-size:15px;filter:drop-shadow(0 0 4px var(--c,#fff));animation:ecoPulse 1.6s ease-in-out infinite;pointer-events:none}
+.eco-badge.ord{animation-duration:2.4s}
+.eco-wline{animation:ecoDash 1s linear infinite}
+@keyframes ecoPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.25)}}
+@keyframes ecoDash{to{stroke-dashoffset:-5.6}}

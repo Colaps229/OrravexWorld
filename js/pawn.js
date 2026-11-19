@@ -309,7 +309,7 @@
     // ----- Збереження -----
     serialize() {
       const o = {};
-      const keys = ['id', 'faction', 'name', 'gender', 'age', 'bio', 'traits', 'skills', 'look', 'x', 'y', 'needs', 'tol', 'thoughts', 'parts', 'injuries', 'ill', 'blood', 'equip', 'carry', 'work', 'sched', 'drafted', 'downed', 'opinion', 'rel', 'log', 'disabled', 'noViolence', 'kills', 'bedId', 'title', 'aiKind', 'raidId', 'leaveAt', 'face', 'bd', 'gd', 'inspire', 'kinT', 'scars', 'chronic', 'immune', 'prost', 'moodHist', 'proposeCool', 'psy', 'siege', 'bounty', 'thief'];
+      const keys = ['id', 'faction', 'name', 'gender', 'age', 'bio', 'traits', 'skills', 'look', 'x', 'y', 'needs', 'tol', 'thoughts', 'parts', 'injuries', 'ill', 'blood', 'equip', 'carry', 'work', 'sched', 'drafted', 'downed', 'opinion', 'rel', 'log', 'disabled', 'noViolence', 'kills', 'bedId', 'title', 'aiKind', 'raidId', 'leaveAt', 'face', 'bd', 'gd', 'inspire', 'kinT', 'scars', 'chronic', 'immune', 'prost', 'moodHist', 'proposeCool', 'psy', 'siege', 'bounty', 'thief', 'hire'];
       for (const k of keys) if (this[k] !== undefined) o[k] = this[k];
       o.bedId = this.bed ? this.bed.id : null;
       return JSON.parse(JSON.stringify(o));
