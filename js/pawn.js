@@ -274,7 +274,7 @@
     // ================= ПОТРЕБИ =================
     tickNeeds(env) {
       const n = this.needs; const g = G();
-      let hungerRate = 1 / 16000 * (this.has('gourmand') ? 1.25 : 1) * (this.sleeping ? 0.7 : 1);
+      let hungerRate = 1 / 16000 * (this.has('gourmand') ? 1.25 : 1) * (this.sleeping ? 0.7 : 1) * (this.hungerMul ? this.hungerMul() : 1);
       n.food = Math.max(0, n.food - hungerRate);
       if (!this.sleeping) n.rest = Math.max(0, n.rest - 1 / 9500 * (this.has('night_owl') ? 0.9 : 1));
       n.joy = Math.max(0, n.joy - 1 / 14000);
@@ -309,7 +309,7 @@
     // ----- Збереження -----
     serialize() {
       const o = {};
-      const keys = ['id', 'faction', 'name', 'gender', 'age', 'bio', 'traits', 'skills', 'look', 'x', 'y', 'needs', 'tol', 'thoughts', 'parts', 'injuries', 'ill', 'blood', 'equip', 'carry', 'work', 'sched', 'drafted', 'downed', 'opinion', 'rel', 'log', 'disabled', 'noViolence', 'kills', 'bedId', 'title', 'aiKind', 'raidId', 'leaveAt', 'face', 'inspire', 'kinT', 'scars', 'chronic', 'immune', 'prost', 'moodHist', 'proposeCool'];
+      const keys = ['id', 'faction', 'name', 'gender', 'age', 'bio', 'traits', 'skills', 'look', 'x', 'y', 'needs', 'tol', 'thoughts', 'parts', 'injuries', 'ill', 'blood', 'equip', 'carry', 'work', 'sched', 'drafted', 'downed', 'opinion', 'rel', 'log', 'disabled', 'noViolence', 'kills', 'bedId', 'title', 'aiKind', 'raidId', 'leaveAt', 'face', 'bd', 'gd', 'inspire', 'kinT', 'scars', 'chronic', 'immune', 'prost', 'moodHist', 'proposeCool'];
       for (const k of keys) if (this[k] !== undefined) o[k] = this[k];
       o.bedId = this.bed ? this.bed.id : null;
       return JSON.parse(JSON.stringify(o));

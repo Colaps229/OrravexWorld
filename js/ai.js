@@ -381,10 +381,15 @@
           const z0 = map.zoneAt[i];
           let pz = zones; if (z0 && z0.type === 'stock' && z0.accepts(it.def)) { pz = zones.filter(z => (z.priority || 0) > (z0.priority || 0)); if (!pz.length) continue; }
           if (map.bp[i] && false) continue;
-          const x = i % map.w, y = (i / map.w) | 0; const d = manh(p.tx, p.ty, x, y);
-          if (d >= bd || d > 80) continue;
+          const x = i % map.w, y = (i / map.w) | 0; const d0m = manh(p.tx, p.ty, x, y);
+          // терміновість: їжа, що псується, переноситься першою; ще швидше — якщо лежить просто неба
+          const urg = (d0.rot ? (map.isRoofed(i) ? 28 : 46) : 0);
+          if (d0m - urg - 24 >= bd || d0m > 80) continue;
           if (!reachTile(p, i)) continue;
           const dc = findStockCell(p, it, pz); if (dc == null) continue;
+          const zp = map.zoneAt[dc] ? (map.zoneAt[dc].priority == null ? 2 : map.zoneAt[dc].priority) : 2;
+          const d = d0m - urg - zp * 6; // склад із вищим пріоритетом притягує сильніше
+          if (d >= bd) continue;
           bd = d; best = it; dest = dc;
         }
       }
@@ -693,6 +698,8 @@
     if (r === 'arrived') {
       const def = p.carry.def, n = p.carry.n; p.carry = null;
       const left = map.addItem(def, n, dx, dy);
+      g.stats.hauled = (g.stats.hauled || 0) + n;
+      if (RW.R) { const zz = map.zoneAt[j.dest]; if (zz && zz.priority >= 3) RW.R.fx.text(dx + 0.5, dy, '▲ +' + n, '#ffb35a'); else if (n >= 10) RW.R.fx.text(dx + 0.5, dy, '+' + n, '#cfe8ff'); RW.R.fx.dust(dx + 0.5, dy + 0.5, 2); }
       return DONE;
     }
   };
@@ -765,7 +772,7 @@
       const b = map.addBuilding(bp.def, bp.x, bp.y, bp.rot);
       if (b.def.fuel) b.fuel = 0;
       if (b.def.battery) b.charge = 0;
-      g.stats.built++;
+      g.stats.built++; g.stats.bld = g.stats.bld || {}; g.stats.bld[bp.def] = (g.stats.bld[bp.def] || 0) + 1;
       if (RW.R) RW.R.fx.dust(bp.x + bp.w / 2, bp.y + bp.h / 2, 6);
       return DONE;
     }

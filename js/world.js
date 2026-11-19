@@ -625,6 +625,7 @@
           if (d.battery) cap += d.battery;
           if (d.power > 0) {
             if (d.solar) prod += d.power * Math.max(0, daylight) * (this.weatherMul || 1);
+            else if (d.wind) prod += d.power * (RW.Energy ? RW.Energy.windFactor() : 0.35);
             else if (d.fuel) { if (b.fuel > 0) prod += d.power; }
             else prod += d.power;
           } else if (d.power < 0) {

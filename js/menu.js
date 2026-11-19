@@ -123,19 +123,21 @@
   A.step3 = () => M.step3();
 
   // ------------------------- Планета -------------------------
-  let planet = null, gview = null, gst = { yaw: 0.5, pitch: -0.25, drag: null, target: null, hover: null }, gStars = [], gT = 0, gRun = false;
+  let planet = null, gview = null, gst = { yaw: 0.5, pitch: -0.25, zoom: 1, drag: null, target: null, hover: null }, gStars = [], gT = 0, gRun = false;
   const GS = 820;
   function ensurePlanet() { if (!planet || planet.seed !== M.cfg.planetSeed) { planet = RW.Planet.get(M.cfg.planetSeed); } if (!gview) gview = RW.Planet.makeView(620); if (!gStars.length) { const r = U.rng(5); for (let i = 0; i < 260; i++) gStars.push([r() * GS, r() * GS, r() * 1.5 + 0.3, r() * 6]); } }
   M.step3 = function () {
     const c = M.cfg; ensurePlanet(); M.screen = 'world';
     const sl = (label, key) => `<label class="srow">${label}<input type="range" min="0" max="1" step="0.05" value="${c[key]}" data-mi="world" data-k="${key}"><b>${Math.round(c[key] * 100)}%</b></label>`;
     show(`<div class="steps">1. Сценарій › 2. Оповідач › <b>3. Планета і місце посадки</b> › 4. Колоністи</div>
-      <div class="planetwrap"><div class="pl-left"><div class="globebox"><canvas id="globe" width="${GS}" height="${GS}"></canvas></div><div class="pl-hint">Тягніть мишею, щоб обертати планету. Клацніть по суші, щоб обрати місце посадки.</div><div class="btnrow"><button class="btn" data-m="newPlanet">🪐 Нова планета</button><button class="btn" data-m="randSpot">📍 Випадкове місце</button></div></div>
+      <div class="planetwrap"><div class="pl-left"><div class="globebox"><canvas id="globe" width="${GS}" height="${GS}"></canvas></div><div class="pl-hint">Тягніть мишею — обертати, колесо миші або кнопки +/− — наближати й віддаляти. Клацніть по суші, щоб обрати місце посадки.</div><div class="btnrow"><button class="btn" data-m="zoomOut" title="Віддалити">−</button><button class="btn" data-m="zoomIn" title="Наблизити">+</button><button class="btn" data-m="zoomReset" title="Скинути масштаб">⊙</button><button class="btn" data-m="newPlanet">🪐 Нова планета</button><button class="btn" data-m="randSpot">📍 Випадкове місце</button></div></div>
       <div class="pl-right"><div id="plinfo"></div><div id="plctl"><h4>🏞 Налаштування ділянки</h4>${sl('Гори', 'mountain')}${sl('Вода', 'water')}${sl('Ліси', 'trees')}<label class="srow">Розмір карти<select data-mc="size">${D.worldSizes.map(s => `<option value="${s.id}" ${c.size === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}</select></label><canvas id="prev" width="180" height="180"></canvas></div></div></div>
       <div class="btnrow"><button class="btn" data-m="step2">← Назад</button><button class="btn big" data-m="step4">Далі →</button></div>`, 'menu-wide menu-globe');
     M.screen = 'world'; wireGlobe(); updateInfo(); if (c.loc) setTimeout(preview, 30);
     if (!gRun) { gRun = true; requestAnimationFrame(globeLoop); }
   };
+  const setZoom = z => { gst.zoom = U.clamp(z, 0.55, 3.2); };
+  A.zoomIn = () => setZoom((gst.zoom || 1) * 1.25); A.zoomOut = () => setZoom((gst.zoom || 1) / 1.25); A.zoomReset = () => setZoom(1);
   A.newPlanet = () => { M.cfg.planetSeed = (Math.random() * 1e9) | 0; M.cfg.loc = null; planet = null; M.step3(); };
   A.randSpot = () => { for (let k = 0; k < 400; k++) { const lat = (Math.random() - 0.5) * Math.PI * 0.8, lon = (Math.random() - 0.5) * Math.PI * 2; const s = RW.Planet.sample(planet, lat, lon); if (!s.ocean) { selectLoc(lat, lon); return; } } };
   function selectLoc(lat, lon) {
@@ -167,6 +169,8 @@
     };
     window.onmouseup = e => { const d = gst.drag; gst.drag = null; if (d && d.moved < 5 && $('globe')) { const [x, y] = pos(e); const p = RW.Planet.pick(gst, GS, x, y); if (p) { RW.A.sfx('ui'); selectLoc(p[0], p[1]); } } };
     cv.onmouseleave = () => { gst.hover = null; };
+    cv.onwheel = e => { e.preventDefault(); setZoom((gst.zoom || 1) * (e.deltaY < 0 ? 1.12 : 1 / 1.12)); };
+    cv.ondblclick = e => { e.preventDefault(); };
   }
   function globeLoop(now) {
     const cv = $('globe'); if (M.screen !== 'world' || !cv) { gRun = false; return; }
@@ -183,7 +187,8 @@
     for (const s of gStars) { x.globalAlpha = 0.45 + 0.55 * Math.abs(Math.sin(gT * 0.001 + s[3])); x.fillStyle = '#fff'; x.fillRect(s[0] / GS * CW, s[1], s[2], s[2]); } x.globalAlpha = 1;
     const sun = x.createRadialGradient(GS * 0.04, GS * 0.04, 2, GS * 0.04, GS * 0.04, GS * 0.5); sun.addColorStop(0, 'rgba(255,240,200,0.9)'); sun.addColorStop(0.1, 'rgba(255,210,140,0.35)'); sun.addColorStop(1, 'rgba(255,200,120,0)'); x.fillStyle = sun; x.fillRect(0, 0, CW, GS);
     x.save(); x.translate(OX, 0);
-    RW.Planet.render(gview, planet, gst, gT); x.drawImage(gview.c, 0, 0, GS, GS);
+    { const wide = (gst.zoom || 1) > 1.12; if (wide) { gview.W = Math.min(620, Math.floor(Math.sqrt(520000 * GS / CW))); gview.WX = Math.round(gview.W * CW / GS); } else { gview.W = 620; gview.WX = 620; } }
+    RW.Planet.render(gview, planet, gst, gT); if (gview.WX > gview.W) x.drawImage(gview.c, -OX, 0, CW, GS); else x.drawImage(gview.c, 0, 0, GS, GS);
     // маркер
     const c = M.cfg; if (c.loc) {
       const pr = RW.Planet.project(gst, GS, c.loc.lat, c.loc.lon);

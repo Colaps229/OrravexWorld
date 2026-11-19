@@ -41,6 +41,7 @@
   Net.accept = async code => { const o = await dec(code); if (o.t !== 'a') throw new Error('Це не відповідь гостя'); await pc.setRemoteDescription({ type: 'answer', sdp: o.sdp }); };
   Net.join = async code => { const o = await dec(code); if (o.t !== 'o') throw new Error('Це не код хоста'); Net.reset(); pc = new RTCPeerConnection(ICE); watch(pc); pc.ondatachannel = e => wire(e.channel); await pc.setRemoteDescription({ type: 'offer', sdp: o.sdp }); await pc.setLocalDescription(await pc.createAnswer()); await waitIce(pc); Net.role = 'guest'; Net.state = 'waiting'; return enc({ t: 'a', sdp: pc.localDescription.sdp }); };
   Net.send = o => { if (dc && dc.readyState === 'open') { try { dc.send(JSON.stringify(o)); return true; } catch (e) { } } return false; };
+  Net.buffered = () => (dc ? dc.bufferedAmount : 0);
   Net.close = () => { Net.reset(); Net.state = 'closed'; emit('close'); };
   setInterval(() => { if (Net.state !== 'open') return; Net.send({ t: 'ping', ts: performance.now() }); if (performance.now() - Net.last > 20000) { Net.state = 'closed'; try { dc.close(); } catch (e) { } emit('close'); } }, 3000);
 

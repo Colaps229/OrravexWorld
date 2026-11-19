@@ -32,12 +32,12 @@
   function render(force) {
     if (!root) return; const list = (MP.chat || []).filter(m => m.w === 'me' || m.w === 'peer');
     const now = Date.now(); const vis = Ch.open ? list.slice(-14) : list.filter(m => now - m.t < 12000).slice(-6);
-    const peer = MP.st ? (MP.st().peerName || 'Друг') : 'Друг'; const me = MP.st ? (MP.st().myName || 'Ви') : 'Ви';
+    const ms = (MP.st && MP.st()) || {}; const peer = ms.peerName || 'Друг'; const me = ms.myName || 'Ви';
     const h = vis.map(m => '<div class="gm ' + m.w + '"><b>' + esc(m.w === 'me' ? me : peer) + ':</b> ' + esc(m.text) + '</div>').join('');
     if (log.dataset.h !== h || force) { log.dataset.h = h; log.innerHTML = h; log.scrollTop = 1e6; }
     root.style.display = (vis.length || Ch.open) ? '' : 'none';
   }
-  setInterval(() => { if (!running() || !MP.chat) return; build(); const n = MP.chat.length; if (n !== shown) { shown = n; hideT = Date.now() + 12000; } render(); }, 300);
+  setInterval(() => { if (!running() || !MP.chat || !MP.active()) return; build(); const n = MP.chat.length; if (n !== shown) { shown = n; hideT = Date.now() + 12000; } render(); }, 300);
 
   window.addEventListener('keydown', e => {
     if (e.code !== 'Enter' && e.code !== 'NumpadEnter') return; if (e.altKey || e.ctrlKey || e.repeat) return;

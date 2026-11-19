@@ -9,18 +9,22 @@
   const Sp = RW.Spec = { viewing: false, providing: false, allow: true, loading: false, ghost: null, name: '' };
   const $ = id => document.getElementById(id);
   const send = o => Net.send(o);
-  const CH = 40000;
+  const CH = 14000; // безпечно для будь-якого WebRTC (ліміт повідомлення може бути 16 КБ)
 
   // ---------- передача великих повідомлень частинами ----------
   let sid = 0;
-  function sendBig(kind, obj) {
+  // частини йдуть із паузами, щоб не переповнити буфер каналу на реальному зʼєднанні
+  async function sendBig(kind, obj) {
     const s = JSON.stringify(obj); const id = ++sid; const n = Math.max(1, Math.ceil(s.length / CH));
-    for (let i = 0; i < n; i++) if (!send({ t: 'specPart', k: kind, id, i, n, d: s.slice(i * CH, (i + 1) * CH) })) return false;
+    for (let i = 0; i < n; i++) {
+      let w = 0; while (Net.buffered() > 200000 && w++ < 200) await new Promise(r => setTimeout(r, 40));
+      if (Net.state !== 'open' || !send({ t: 'specPart', k: kind, id, i, n, d: s.slice(i * CH, (i + 1) * CH) })) return false;
+    }
     return true;
   }
   const parts = {};
   function onPart(m) {
-    const a = parts[m.id] || (parts[m.id] = { k: m.k, n: m.n, d: [] }); a.d[m.i] = m.d;
+    const a = parts[m.id] || (parts[m.id] = { k: m.k, n: m.n, d: [] }); a.d[m.i] = m.d; if (Sp.loading) loadMsg('Завантаження колонії… ' + Math.round(100 * a.d.filter(x => x != null).length / a.n) + '%');
     for (let i = 0; i < a.n; i++) if (a.d[i] == null) return null;
     delete parts[m.id]; for (const k in parts) if (+k < m.id - 4) delete parts[k];
     return { k: a.k, o: JSON.parse(a.d.join('')) };
@@ -79,7 +83,7 @@
   function onReq(on) {
     if (!on) { if (Sp.providing) RW.UI.toast('👁 ' + MP.st().peerName + ' припинив(ла) стежити', 'info'); Sp.providing = false; setBadge(false); MP.dirty && (MP.dirty.card = true); return; }
     if (!Sp.allow) { send({ t: 'specNo' }); return; }
-    Sp.providing = true; setBadge(true); sent.clear(); sentA.clear(); lastFull = performance.now(); sendInit();
+    send({ t: 'specAck' }); Sp.providing = true; setBadge(true); sent.clear(); sentA.clear(); lastFull = performance.now(); sendInit();
     RW.UI.toast('👁 ' + MP.st().peerName + ' дивиться вашу колонію (лише перегляд)', 'info'); MP.dirty && (MP.dirty.card = true);
   }
 
@@ -110,7 +114,7 @@
     const g = buildGhost(o);
     if (old) { g.pawns = old.pawns; g.animals = old.animals; g.tick = old.tick; g.daylight = old.daylight; g.weather = old.weather; g.snow = old.snow; }
     ghost = g; Sp.ghost = g; R.viewG = g; R.reset(); if (first) enter(o);
-    Sp.loading = false;
+    Sp.loading = false; loadEnd();
   }
 
   function mkPawn(o, keepPos) {
@@ -178,7 +182,7 @@
     e.stopImmediatePropagation(); e.preventDefault();
   }
   Sp.stop = function (silent) {
-    if (!Sp.viewing && !Sp.loading) return; const was = Sp.viewing; Sp.viewing = false; Sp.loading = false;
+    if (!Sp.viewing && !Sp.loading) return; const was = Sp.viewing; Sp.viewing = false; Sp.loading = false; loadEnd();
     cancelAnimationFrame(raf); window.removeEventListener('keydown', blockKeys, true); window.removeEventListener('mousedown', blockMouse, true); window.removeEventListener('mouseup', blockMouse, true);
     window.removeEventListener('contextmenu', blockMouse, true); window.removeEventListener('dblclick', blockMouse, true); window.removeEventListener('click', blockMouse, true);
     if (hud) { hud.remove(); hud = null; } const ui = $('ui'); if (ui) ui.classList.remove('hidden');
@@ -189,10 +193,14 @@
     if (was && !silent) RW.UI.toast('Ви повернулись у свою колонію', 'info');
     MP.dirty && (MP.dirty.card = true);
   };
+  let loadEl = null, ackT = 0, doneT = 0;
+  function loadMsg(t) { if (!loadEl) { loadEl = document.createElement('div'); loadEl.className = 'spec-load'; document.body.appendChild(loadEl); } loadEl.textContent = '👁 ' + t; }
+  function loadEnd() { clearTimeout(ackT); clearTimeout(doneT); if (loadEl) { loadEl.remove(); loadEl = null; } }
   Sp.start = function () {
     if (Sp.viewing || Sp.loading) return; if (!MP.active() || !MP.online()) { RW.UI.toast('Немає зʼєднання з другом', 'bad'); return; }
-    Sp.loading = true; send({ t: 'specReq', on: true }); RW.UI.toast('👁 Завантажуємо колонію друга…', 'info');
-    setTimeout(() => { if (Sp.loading) { Sp.loading = false; RW.UI.toast('Друг не відповів (перевірте зʼєднання)', 'bad'); } }, 12000);
+    Sp.loading = true; Sp.acked = false; send({ t: 'specReq', on: true }); loadMsg('Запит надіслано другові…');
+    ackT = setTimeout(() => { if (Sp.loading && !Sp.acked) { Sp.loading = false; loadEnd(); send({ t: 'specReq', on: false }); RW.UI.toast('Друг не відповів на запит — схоже, у нього інша (старіша) версія гри. Оновіть гру в обох (потрібна ' + RW.VER.num + ' або новіша).', 'bad'); } }, 5000);
+    doneT = setTimeout(() => { if (Sp.loading) { Sp.loading = false; loadEnd(); RW.UI.toast('Колонія друга не завантажилась (слабке зʼєднання). Спробуйте ще раз.', 'bad'); } }, 40000);
   };
   Sp.setAllow = v => { Sp.allow = !!v; if (!v && Sp.providing) { Sp.providing = false; setBadge(false); send({ t: 'specNo' }); } };
 
@@ -202,6 +210,7 @@
     if (k !== 'msg') return;
     switch (m.t) {
       case 'specReq': onReq(!!m.on); break;
+      case 'specAck': Sp.acked = true; if (Sp.loading) loadMsg('Друг відповів, завантаження…'); break;
       case 'specNo': if (Sp.viewing || Sp.loading) { Sp.stop(true); RW.UI.toast('Друг не дозволяє дивитись його колонію', 'bad'); } break;
       case 'specPart': { const r = onPart(m); if (r && r.k === 'init' && (Sp.viewing || Sp.loading)) { try { applyInit(r.o); } catch (e) { console.error(e); Sp.stop(true); RW.UI.toast('Не вдалося показати колонію друга', 'bad'); } } break; }
       case 'specT': if (Sp.viewing) onTick(m); break;

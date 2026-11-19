@@ -212,6 +212,7 @@
   // ---------------------------------------------------------------
   //  Ефекти
   // ---------------------------------------------------------------
+  R.worldOver = []; R.screenOver = []; // хуки модулів: малювання у світі / на екрані
   const fx = R.fx = {};
   fx.text = (x, y, txt, color) => { if (texts.length > 80) texts.shift(); texts.push({ x: x + (Math.random() - 0.5) * 0.3, y, txt, color: color || '#fff', t: 0 }); };
   fx.blood = (x, y, dmg) => {
@@ -426,6 +427,7 @@
     if (RW.Husbandry && !R.viewG) RW.Husbandry.drawOverlay(ctx, TS, R.time);
     if (RW.Prisoners && !R.viewG) RW.Prisoners.drawOverlay(ctx, TS, R.time);
     if (RW.Layers) RW.Layers.draw(ctx, TS, map, x0, y0, x1, y1, R.time);
+    if (!R.viewG) for (const f of R.worldOver) { try { f(ctx, TS, map, x0, y0, x1, y1, R.time); } catch (e) { console.error(e); } }
     if (RW.Traders && !R.viewG) RW.Traders.draw(ctx, TS, R.time);
     if (RW.Rel && !R.viewG) RW.Rel.drawParty(ctx, TS, R.time);
     if (RW.FX2 && !R.viewG) RW.FX2.draw(ctx, TS);
@@ -439,6 +441,7 @@
     // погода
     drawWeather(g);
     if (RW.Disasters && !R.viewG) RW.Disasters.drawScreen(ctx, W, H);
+    if (!R.viewG) for (const f of R.screenOver) { try { f(ctx, W, H, R.time); } catch (e) { console.error(e); } }
     // оверлей UI у світових координатах
     ctx.save(); ctx.translate(ox, oy); ctx.scale(cam.zoom, cam.zoom);
     if (RW.UI && RW.UI.drawWorldOverlay && !R.viewG) RW.UI.drawWorldOverlay(ctx);
@@ -502,6 +505,8 @@
     else if (d.id === 'wood_gen' && b.fuel > 0) { ctx.fillStyle = 'rgba(255,140,40,0.55)'; ctx.fillRect(px + 12, py + b.h * TS - 18, 8, 6); if (Math.random() < 0.08) fx.smoke(px / TS + 0.9, py / TS + 0.2, '#666'); }
     else if (d.id === 'stove' && b.working) { ctx.fillStyle = 'rgba(255,120,30,0.5)'; ctx.beginPath(); ctx.arc(px + 17, py + 13, 5, 0, 6.3); ctx.arc(px + 47, py + 13, 5, 0, 6.3); ctx.fill(); }
     else if (d.id === 'turret') { ctx.save(); ctx.translate(cx, cy); ctx.rotate(b.aimAt || 0); ctx.fillStyle = '#20262c'; ctx.fillRect(-2, -3, 18, 6); ctx.fillStyle = '#4a5560'; ctx.fillRect(-2, -3, 8, 6); if (b.flash > 0) { b.flash--; ctx.fillStyle = '#ffe9a0'; ctx.beginPath(); ctx.arc(19, 0, 6, 0, 6.3); ctx.fill(); } ctx.restore(); if (!b.on) { ctx.fillStyle = 'rgba(200,40,40,0.7)'; ctx.fillRect(cx - 3, cy - 3, 6, 6); } }
+    else if (d.id === 'wind' && RW.Energy) RW.Energy.drawWind(ctx, b, px, py, t, g);
+    else if (d.id === 'grow_stove' && RW.Energy) RW.Energy.drawStove(ctx, b, px, py, t, flame);
     else if (d.id === 'research_bench' && g.research.current && b.res) { ctx.fillStyle = 'rgba(80,255,255,0.3)'; ctx.fillRect(px + 8, py + 8, 26, 14); }
     else if (d.id === 'battery') { const fr = d.battery ? b.charge / d.battery : 0; ctx.fillStyle = '#6f6'; ctx.fillRect(px + 8, py + 24, 16 * fr, 2); }
     else if (d.id === 'conduit') { const w = g.map.w; const nb = (dx, dy) => { const o = g.map.bld[(b.y + dy) * w + b.x + dx]; return o && (o.def.conduit || o.def.power || o.def.battery); }; ctx.fillStyle = '#9a5a1a'; if (nb(1, 0)) ctx.fillRect(px + 16, py + 13, 16, 6); if (nb(-1, 0)) ctx.fillRect(px, py + 13, 16, 6); if (nb(0, 1)) ctx.fillRect(px + 13, py + 16, 6, 16); if (nb(0, -1)) ctx.fillRect(px + 13, py, 6, 16); }
@@ -547,7 +552,8 @@
     if (p.faction === 'enemy') { c.strokeStyle = 'rgba(255,40,40,0.55)'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(px, py + 6, 10, 4.5, 0, 0, 6.3); c.stroke(); }
     if (p.hurtT > 0) { c.save(); c.globalAlpha = 0.25; c.fillStyle = '#f33'; c.beginPath(); c.arc(px, py - 2, 11, 0, 6.3); c.fill(); c.restore(); }
     if (RW.Life && p.isColonist) RW.Life.auraUnder(c, p, px, py, R.time);
-    GFX.drawPawn(c, p, px, py, 1, { time: R.time, aimAngle: aim });
+    const ks = (p.faction === 'colony' && p.age < 13) ? 0.76 : 1; // діти менші
+    GFX.drawPawn(c, p, px, py + (1 - ks) * 9, ks, { time: R.time, aimAngle: aim });
     if (RW.Health && p.isColonist) RW.Health.bodyOverlay(c, p, px, py);
     if (RW.Life && p.isColonist) RW.Life.bubbleOver(c, p, px, py, R.time, R.cam.zoom);
     // мітки
