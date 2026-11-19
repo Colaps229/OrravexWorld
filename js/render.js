@@ -579,6 +579,7 @@
     if (RW.Life && p.isColonist) RW.Life.auraUnder(c, p, px, py, R.time);
     const ks = (p.faction === 'colony' && p.age < 13) ? 0.76 : 1; // діти менші
     GFX.drawPawn(c, p, px, py + (1 - ks) * 9, ks, { time: R.time, aimAngle: aim });
+    if ((p.sleeping || p.inBed) && !p.dead && !p.carriedBy) { const bb = g.map.bld[Math.floor(p.y) * g.map.w + Math.floor(p.x)]; if (bb && bb.def.bed && bb.key !== 'sleeping_spot') { c.save(); c.fillStyle = bb.key === 'bed' ? '#7e3a3a' : '#5a8aa8'; c.beginPath(); c.roundRect ? c.roundRect(px - 3, py - 11, 14, 22, 3) : c.rect(px - 3, py - 11, 14, 22); c.fill(); c.fillStyle = 'rgba(255,255,255,0.16)'; c.fillRect(px - 3, py - 11, 3, 22); c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 0.8; c.stroke(); c.restore(); } }
     if (RW.Health && p.isColonist) RW.Health.bodyOverlay(c, p, px, py);
     if (RW.Life && p.isColonist) RW.Life.bubbleOver(c, p, px, py, R.time, R.cam.zoom);
     // мітки

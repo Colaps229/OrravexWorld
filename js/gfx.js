@@ -564,8 +564,9 @@
     // тінь
     ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(1.5, 6.5, lying ? 11 : 8 * bw, lying ? 5 : 3.6, 0, 0, 6.3); ctx.fill();
     if (lying) {
-      ctx.rotate(p.sleeping && p.bedRot != null ? p.bedRot : Math.PI / 2 * (p.id % 2 ? 1 : -1));
-      ctx.translate(0, -2);
+      const onBed = !p.dead && (p.sleeping || p.inBed);
+      ctx.rotate(p.bedRot != null && p.sleeping ? p.bedRot : onBed ? -Math.PI / 2 : Math.PI / 2 * (p.id % 2 ? 1 : -1));
+      ctx.translate(0, onBed ? 1.5 : -2);
     }
     const bob = moving ? Math.sin(ph * 2) * 0.9 : 0;
     const swing = moving ? Math.sin(ph * 2) * 3.6 : 0;

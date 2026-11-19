@@ -750,13 +750,17 @@
     if (j.stage === 1) {
       const it = j.item; if (!it || it.dead) { j.stage = 0; return; }
       const r = moveTo(p, it.i % map.w, (it.i / map.w) | 0); if (r === 'fail') return FAIL;
-      if (r === 'arrived') { const def = it.def; const cap = Math.min(j.miss.n, 75); const got = map.takeItem(it, cap); giveCarry(p, def, got); j.stage = 2; resetMove(p); }
+      if (r === 'arrived') { const def = it.def; let tot = j.miss.n; for (const o of map.blueprints) { if (o === bp || o.dead || (o.res && o.res !== p.id)) continue; const mm = (o.need[j.miss.def] || 0) - (o.have[j.miss.def] || 0); if (mm > 0 && Math.abs(o.x - bp.x) + Math.abs(o.y - bp.y) < 14) tot += mm; } const cap = Math.min(tot, 75, it.n); const got = map.takeItem(it, cap); giveCarry(p, def, got); j.stage = 2; resetMove(p); }
       return;
     }
     if (j.stage === 2) {
-      const spot = workSpot(p, bp.x, bp.y, bp.w, bp.h); if (!spot) return FAIL;
-      const r = moveTo(p, spot[0], spot[1]); if (r === 'fail') return FAIL;
-      if (r === 'arrived') { bp.have[p.carry.def] = (bp.have[p.carry.def] || 0) + p.carry.n; p.carry = null; j.stage = 0; resetMove(p); }
+      if (!p.carry) { j.dst = null; j.stage = 0; return; }
+      let tg = j.dst && !j.dst.dead && ((j.dst.need[p.carry.def] || 0) - (j.dst.have[p.carry.def] || 0) > 0) ? j.dst : null;
+      if (!tg) { const dm = p.carry.def; const lack = o => (o.need[dm] || 0) - (o.have[dm] || 0) > 0; if (lack(bp)) tg = bp; else { let bd = 1e9; for (const o of map.blueprints) { if (o.dead || (o.res && o.res !== p.id) || !lack(o)) continue; const dd = Math.abs(o.x - p.tx) + Math.abs(o.y - p.ty); if (dd < bd) { bd = dd; tg = o; } } } j.dst = tg; resetMove(p); }
+      if (!tg) { map.addItem(p.carry.def, p.carry.n, p.tx, p.ty); p.carry = null; j.stage = 0; return; }
+      const spot = workSpot(p, tg.x, tg.y, tg.w, tg.h); if (!spot) { j.dst = null; if (tg === bp) return FAIL; return; }
+      const r = moveTo(p, spot[0], spot[1]); if (r === 'fail') { j.dst = null; if (tg === bp) return FAIL; return; }
+      if (r === 'arrived') { const dm = p.carry.def; const give = Math.min(p.carry.n, (tg.need[dm] || 0) - (tg.have[dm] || 0)); tg.have[dm] = (tg.have[dm] || 0) + give; p.carry.n -= give; if (p.carry.n <= 0) { p.carry = null; j.stage = 0; } j.dst = null; resetMove(p); }
       return;
     }
     // робота

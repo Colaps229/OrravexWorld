@@ -275,8 +275,8 @@
   bld('floor_steel', { cat: 'structure', name: 'Металева підлога', desc: 'Практична.', cost: { steel: 4 }, work: 60, hp: 100, floor: true, beauty: 0.5, research: 'metalwork', color: '#7d8a96' });
   // меблі
   bld('sleeping_spot', { cat: 'furniture', name: 'Спальне місце', desc: 'Просто місце для сну на землі.', cost: {}, work: 40, hp: 20, bed: { rest: 0.75, comfort: 0.1, q: 0 }, color: '#8a7a5a' });
-  bld('bed', { cat: 'furniture', name: 'Ліжко', desc: 'Комфортний сон.', w: 1, h: 2, cost: { wood: 45, cloth: 10 }, work: 300, hp: 60, bed: { rest: 1.0, comfort: 0.6, q: 1 }, flam: 0.8, beauty: 1, color: '#7a5a3a' });
-  bld('hospital_bed', { cat: 'furniture', name: 'Лікарняне ліжко', desc: 'Покращує лікування й відновлення.', w: 1, h: 2, cost: { steel: 40, cloth: 12 }, work: 380, hp: 70, bed: { rest: 1.05, comfort: 0.5, q: 2, med: true }, research: 'medicine', color: '#6a8a9a' });
+  bld('bed', { cat: 'furniture', name: 'Ліжко', desc: 'Комфортний сон.', w: 1, h: 1, cost: { wood: 45, cloth: 10 }, work: 300, hp: 60, bed: { rest: 1.0, comfort: 0.6, q: 1 }, flam: 0.8, beauty: 1, color: '#7a5a3a' });
+  bld('hospital_bed', { cat: 'furniture', name: 'Лікарняне ліжко', desc: 'Покращує лікування й відновлення.', w: 1, h: 1, cost: { steel: 40, cloth: 12 }, work: 380, hp: 70, bed: { rest: 1.05, comfort: 0.5, q: 2, med: true }, research: 'medicine', color: '#6a8a9a' });
   bld('table', { cat: 'furniture', name: 'Обідній стіл', desc: 'Їсти за столом приємніше.', w: 2, h: 1, cost: { wood: 30 }, work: 160, hp: 70, pass: 2, table: true, flam: 0.8, beauty: 0.5, color: '#8a5a30' });
   bld('chair', { cat: 'furniture', name: 'Стілець', desc: 'Комфортно сидіти.', cost: { wood: 12 }, work: 80, hp: 40, pass: 2, chair: 0.55, flam: 0.8, color: '#7a4a24' });
   // виробництво

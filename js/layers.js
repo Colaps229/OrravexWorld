@@ -67,7 +67,7 @@
   }
   const tcol = tt => { const k = U.clamp((tt + 15) / 55, 0, 1); const r = k < 0.45 ? 60 + k * 100 : 90 + (k - 0.45) * 400, b = k < 0.45 ? 255 - k * 300 : 120 - (k - 0.45) * 220; const gg = k < 0.5 ? 120 + k * 200 : 220 - (k - 0.5) * 340; return 'rgb(' + U.clamp(r | 0, 0, 255) + ',' + U.clamp(gg | 0, 0, 255) + ',' + U.clamp(b | 0, 0, 255) + ')'; };
   Ly.draw = function (c, TS, map, x0, y0, x1, y1, t) {
-    const g = G(); const roof = Ly.arr(map); const mode = Ly.mode; const tool = RW.UI && RW.UI.tool; const showRoof = mode === 'roof' || (tool && tool.type === 'roof');
+    const g = G(); const roof = Ly.arr(map); const mode = Ly.mode; const tool = RW.UI && RW.UI.tool; const showRoof = mode === 'roof' || (tool && tool.type === 'roof') || (Ly.flashUntil || 0) > Date.now();
     x0 = Math.max(0, x0); y0 = Math.max(0, y0); x1 = Math.min(map.w - 1, x1); y1 = Math.min(map.h - 1, y1);
     // заплановані дахи (креслення): пунктир + прогрес
     const bps = Ly.bps(map); if (bps.size && showRoof) { c.save(); c.lineWidth = 1.4; c.setLineDash([5, 4]); c.lineDashOffset = -(t * 0.25) % 9; for (const [i, b] of bps) { const x = i % map.w, y = (i / map.w) | 0; if (x < x0 || x > x1 || y < y0 || y > y1) continue; const R = ROOF[b.kind]; c.fillStyle = R.col; c.globalAlpha = 0.14 + b.prog * 0.3; c.fillRect(x * TS, y * TS, TS, TS); c.globalAlpha = 0.85; c.strokeStyle = b.res ? '#ffd070' : '#7ab8ff'; c.strokeRect(x * TS + 2, y * TS + 2, TS - 4, TS - 4); if (b.prog > 0) { c.setLineDash([]); c.fillStyle = '#ffd070'; c.fillRect(x * TS + 3, y * TS + TS - 6, (TS - 6) * b.prog, 3); c.setLineDash([5, 4]); } } c.restore(); }
@@ -134,6 +134,7 @@
   AI.RUN.roofbuild = function (p, j) {
     const g = G(), map = g.map; const bps = Ly.bps(map); const bp = bps.get(j.i); if (!bp) return 'done'; const x = j.i % map.w, y = (j.i / map.w) | 0;
     if (j.stage === 0) { const r = AI.moveTo(p, x, y); if (r === 'fail') { bp.res = null; return 'fail'; } if (r === 'arrived') { j.stage = 1; p.moving = false; } return; }
+    Ly.flashUntil = Date.now() + 2000;
     p.moving = false; j.t += p.workSpeed('construction'); p.gainXp('construction', 0.05); const need = WORK[bp.kind] || 100; bp.prog = Math.min(1, j.t / need);
     if ((g.tick & 15) === 0 && RW.R) RW.R.fx.spark(x + 0.5, y + 0.3); if ((g.tick & 31) === 0 && RW.A) RW.A.sfx('hammer');
     if (j.t >= need) {

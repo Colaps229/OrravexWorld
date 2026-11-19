@@ -496,6 +496,7 @@ select,input[type=text],input[type=number]{background:#10141a;border:1px solid #
 .si-row input[type=number]{width:64px;text-align:center;padding:3px 4px}
 .si-n{display:flex;align-items:center;gap:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .si-n i{width:10px;height:10px;border-radius:3px;flex:none;border:1px solid rgba(0,0,0,.4)}
+.si-n img{width:28px;height:28px;flex:none;object-fit:contain;filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}
 
 /* v0.9.4 — економіка */
 .eco-tabs{display:flex;gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
