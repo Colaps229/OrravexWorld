@@ -751,7 +751,7 @@
       if (e.button === 0 && m.drag && UI.tool) {
         const r = dragRect(); m.drag = null; applyTool(r); UI.dirty = true;
       } else m.drag = null;
-      if (e.button === 0 && m.boxSel) { const bs = m.boxSel; m.boxSel = null; if (bs.moved && !UI.tool) { boxMenu({ x0: Math.min(bs.tx, Math.floor(m.fx)), x1: Math.max(bs.tx, Math.floor(m.fx)), y0: Math.min(bs.ty, Math.floor(m.fy)), y1: Math.max(bs.ty, Math.floor(m.fy)) }, e.clientX, e.clientY); } }
+      if (e.button === 0 && m.boxSel) { const bs = m.boxSel; m.boxSel = null; if (bs.moved && !UI.tool) { const br = { x0: Math.min(bs.tx, Math.floor(m.fx)), x1: Math.max(bs.tx, Math.floor(m.fx)), y0: Math.min(bs.ty, Math.floor(m.fy)), y1: Math.max(bs.ty, Math.floor(m.fy)) }; if (!(RW.Group && RW.Group.box(br))) boxMenu(br, e.clientX, e.clientY); } }
     });
     cv.addEventListener('wheel', e => {
       e.preventDefault(); const c = R().cam; const r = cv.getBoundingClientRect(); const sx = e.clientX - r.left, sy = e.clientY - r.top;
@@ -762,7 +762,9 @@
     window.addEventListener('keyup', e => { UI.keys[e.code] = false; });
     window.addEventListener('blur', () => { UI.keys = {}; });
   };
+  UI.pickAt = (fx, fy) => pickAt(fx, fy);
   function rightClick(m) {
+    if (RW.Group && RW.Group.order(m)) return;
     const g = G(), map = g.map; const p = UI.selPawn(); if (!p || p.faction !== 'colony') return;
     const tx = Math.floor(m.fx), ty = Math.floor(m.fy); if (!map.inb(tx, ty)) return;
     const o = pickAt(m.fx, m.fy);

@@ -1,7 +1,7 @@
 {
- "version": "0.9.6",
- "build": "mwnyrhd1",
- "date": "2026-11-19T19:49:16.069Z",
+ "version": "0.9.7",
+ "build": "mwnz3oka",
+ "date": "2026-11-19T19:58:45.274Z",
  "files": [
   "README.md",
   "css/style.css",
@@ -23,8 +23,10 @@
   "js/events.js",
   "js/extras.js",
   "js/farming.js",
+  "js/fog.js",
   "js/fx2.js",
   "js/gfx.js",
+  "js/group.js",
   "js/guide.js",
   "js/health.js",
   "js/husbandry.js",

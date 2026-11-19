@@ -170,7 +170,7 @@
   function drawRock(x, map, mx, my, i, px, py, v, blk) {
     const w = map.w;
     x.drawImage(GFX.rockTex[v], px, py);
-    if (blk > 1) {
+    if (blk > 1 && (!RW.Fog || RW.Fog.seen(map, i))) {
       const col = D.blocks[blk].color; const rnd = U.rng(i * 7 + 3);
       for (let k = 0; k < 4; k++) {
         const ox = px + 5 + rnd() * 22, oy = py + 5 + rnd() * 22, r = 2.5 + rnd() * 3.5;

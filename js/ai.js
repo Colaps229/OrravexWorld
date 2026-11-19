@@ -803,10 +803,10 @@
     if ((g.tick & 15) === 0) { RW.R && RW.R.fx.dust(x + 0.5, y + 0.5, 2); }
     if ((g.tick & 23) === 0 && RW.A) RW.A.sfx('pick');
     if (prog >= bd.hp) {
-      g.mineProg.delete(i); map.blk[i] = 0; map.desig.delete(i);
+      g.mineProg.delete(i); const fogB = RW.Fog ? RW.Fog.before(map, i) : null; map.blk[i] = 0; map.desig.delete(i);
       if (bd.drop) map.addItem(bd.drop, Math.round(bd.n * (0.85 + Math.random() * 0.3)), x, y);
       if (Math.random() < 0.75 || !bd.drop) map.addItem('stone_chunk', 1, x, y);
-      map.touch(i);
+      map.touch(i); if (RW.Fog) RW.Fog.after(map, i, fogB);
       // сусідні тайли — оновлення країв
       for (const nb of [i - 1, i + 1, i - map.w, i + map.w]) if (nb >= 0 && nb < map.n) map.markDirty(nb);
       RW.R && RW.R.fx.dust(x + 0.5, y + 0.5, 10);
