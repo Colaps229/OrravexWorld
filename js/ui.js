@@ -574,7 +574,7 @@
       const th = $('toolhint'); if (UI.tool) { th.classList.remove('hidden'); th.innerHTML = toolHintText(); } else th.classList.add('hidden');
     }
     if (frame % 90 === 0) computeAlerts();
-    const f = $('fps'); if (RW.S.gfx.fps) { f.classList.remove('hidden'); f.textContent = R().stats.fps + ' FPS · тік ' + g.tick; } else f.classList.add('hidden');
+    const f = $('fps'); if (RW.S.gfx.fps) { f.classList.remove('hidden'); f.textContent = R().stats.fps + ' FPS'; } else f.classList.add('hidden');
     updateHover();
   };
   function setHtml(id, html) { if (cache[id] !== html) { $(id).innerHTML = html; cache[id] = html; } }

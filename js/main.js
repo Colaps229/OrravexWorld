@@ -83,13 +83,17 @@
 
   Game.tickOnce = tickOnce;
   function tickOnce(g) {
+    RW.Perf.tk++;
     g.tick++;
-    RW.Events.tickWorld();
-    if (RW.Life) RW.Life.tick(g);
-    if (g.tick % 5 === 0) RW.Combat.updateThreats();
+    const PF = RW.Perf; PF.m('sim:інше');
+    RW.Events.tickWorld(); PF.m('sim:Events.tickWorld');
+    if (RW.Life) RW.Life.tick(g); PF.m('sim:Life.tick (модулі)');
+    if (g.tick % 5 === 0) RW.Combat.updateThreats(); PF.m('sim:threats');
     for (const p of g.pawns.slice()) { if (p.dead) continue; p.tickHealth && p.tickHealth(); p.tickNeeds && p.tickNeeds(); RW.AI.think(p); }
+    PF.m('sim:колоністи (потреби+AI)');
     for (const a of g.animals.slice()) if (!a.dead) RW.Combat.animalThink(a);
-    RW.Combat.updateProjectiles(); RW.Combat.updateTurrets();
+    PF.m('sim:тварини');
+    RW.Combat.updateProjectiles(); RW.Combat.updateTurrets(); PF.m('sim:снаряди/турелі');
     if (g.tick % 60 === 0) { RW.Combat.updateHerds(); g.animals = g.animals.filter(a => !a.dead); }
     // видалити мертвих (колоністи залишаються в deadPawns через p.die)
     if (g.tick % 30 === 0) {
@@ -100,7 +104,7 @@
     if (g.tick % 600 === 0) { const s = D.seasonOf(g.tick); if (s !== g.curSeason) { g.curSeason = s; RW.GFX.initSeason(s); RW.R.invalidateAll(); } }
     if (g.tick % 10 === 0) RW.A && RW.A.setAmbient(g.weather.type);
     if (g.tick % 300 === 0) { RW.A && RW.A.setIntensity(g.threat > 0 ? 1 : 0); }
-    Game.checkDefeat(g);
+    PF.m('sim:решта тіку'); Game.checkDefeat(g);
   }
   Game.checkDefeat = function (g) {
     if (g.over || g.landing) return; const alive = g.pawns.filter(p => p.faction === 'colony' && !p.dead);
@@ -111,22 +115,27 @@
     raf = requestAnimationFrame(frame);
     if (!Game.running) { return; }
     const g = RW.G; if (!g || !g.map) return;
-    const dt = Math.min(100, now - last); last = now;
+    const rawDt = now - last; const dt = Math.min(100, rawDt); last = now;
+    const PF = RW.Perf; const tA = performance.now(); const tk0 = PF.tk; PF.s();
     // авто-оптимізація: якщо кадр стабільно довгий — вмикаємо легкий режим
     if (!RW.R.lite && !Game.paused && Game.running) { lagEma += (Math.min(dt, 200) - lagEma) * 0.03; if (lagEma > 30) { lagT++; if (lagT > 120) { RW.R.lite = true; if (RW.S.gfx.res > 0.8 && (window.devicePixelRatio || 1) > 1.25) { RW.S.gfx.res = 0.75; RW.R.resize(); } RW.UI && RW.UI.toast && RW.UI.toast('Увімкнено полегшену графіку (низький FPS)', 'info'); } } else lagT = 0; }
+    const PFoffSim = PF.off.sim;
     if (!Game.paused) {
       acc += dt * ((RW.S && RW.S.game && RW.S.game.timeScale) || 0.4); // час іде в 2.5 раза повільніше, ніж раніше
       const step = 1000 / 60; const mult = SPEEDS[g.speed] || 0; let n = 0;
       if (g.landing) { // лише ефекти
         acc = 0; RW.Cutscene.update();
-      } else if (mult > 0) {
+      } else if (mult > 0 && !PFoffSim) {
         const budget = 22; const t0 = performance.now();
         while (acc >= step && n < mult * 2) { acc -= step; for (let k = 0; k < Math.max(1, mult > 1 ? mult / 2 : 1) ; k++) { tickOnce(g); n++; if (performance.now() - t0 > budget) break; } if (performance.now() - t0 > budget) { acc = 0; break; } }
         if (acc > 200) acc = 0;
       } else acc = 0;
       if (RW.S.game.autosave && g.speed > 0) { autosaveT += dt; if (autosaveT > 120000) { autosaveT = 0; RW.Save.auto(); } }
     }
-    RW.UI.updateCamera(); RW.R.draw(); RW.UI.update();
+    const tB = performance.now(); 
+    RW.UI.updateCamera(); RW.R.draw(); const tC = performance.now();
+    if (!PF.off.ui) RW.UI.update(); const tD = performance.now(); PF.m('ui:update');
+    PF.frame(rawDt > 250 ? 250 : rawDt, tB - tA, tC - tB, tD - tC, PF.tk - tk0, g);
   }
 
   // ---------- Ініціалізація сторінки ----------

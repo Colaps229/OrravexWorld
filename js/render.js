@@ -262,6 +262,7 @@
   const WSTY = [[], []]; for (let q = 0; q < 8; q++) { const a = (q + 0.5) / 8; WSTY[0].push('rgba(140,200,240,' + (0.05 + a * 0.1).toFixed(3) + ')'); WSTY[1].push('rgba(255,255,255,' + (0.04 + a * 0.08).toFixed(3) + ')'); }
   const ZONE_COL = { stock: '#d8a040', grow: '#4aa84a', pen: '#c88a5a' };
   const ENTS = [], SEEN = new Set();
+  R.dbgInfo = function () { return { chunksCached: chunks.size, particles: parts.length, floatTexts: texts.length, rings: rings.length, lite: !!R.lite, groundCache: !!gc, canvasPx: canvas ? canvas.width + 'x' + canvas.height : '', zoom: +R.cam.zoom.toFixed(2) }; };
   R.draw = function () { const t0 = performance.now(); drawFrame(); R.drawMs += (performance.now() - t0 - R.drawMs) * 0.25; };
   // Малює всі вже побудовані чанки навколо екрана (з запасом M) в окреме полотно, початок координат — ціле число пікселів пристрою
   function buildGroundCache(map, cam, cz, ox, oy) {
@@ -286,7 +287,7 @@
     const now = performance.now(); R.stats.frames++; if (now - R.stats.last > 1000) { R.stats.fps = R.stats.frames; R.stats.frames = 0; R.stats.last = now; }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (!g || !g.map) { ctx.fillStyle = '#05080c'; ctx.fillRect(0, 0, W, H); return; }
-    updateFx();
+    const PF = RW.Perf, OFF = PF.off; PF.m('draw:підготовка'); updateFx(); PF.m('draw:частинки (оновлення)');
     const map = g.map, cam = R.cam, z = cam.zoom * TS; const S = RW.S.gfx;
     ctx.fillStyle = '#0c1014'; ctx.fillRect(0, 0, W, H);
     // тремтіння
@@ -321,7 +322,7 @@
     // попередня побудова сусідніх чанків (по одному за кадр, лише коли кадр легкий) — прокрутка без підвисань
     if (!staleBuilt && R.drawMs < 9 && (R.time % 3) === 0 && performance.now() - tChunks < 4) prefetchChunk(map, x0 >> 4, y0 >> 4, x1 >> 4, y1 >> 4);
     if (chunks.size > 30 && (R.time & 127) === 0) evictChunks(x0 >> 4, y0 >> 4, x1 >> 4, y1 >> 4);
-    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingEnabled = true; PF.m(useGc ? 'draw:земля (кеш)' : 'draw:земля (чанки)');
     // вода анімація
     const tm = R.time * 0.04;
     ctx.lineWidth = 1;
@@ -334,6 +335,7 @@
         if (!((x + y) & 1)) ctx.fillRect(x * TS + 12 + Math.cos(tm * 0.5 + x) * 5, y * TS + 20 - a * 6, 12, 1.5);
       }
     }
+    PF.m('draw:вода');
     // сніг
     if (g.snow > 0.02) {
       ctx.fillStyle = 'rgba(240,246,252,' + (g.snow * 0.62).toFixed(3) + ')';
@@ -342,6 +344,7 @@
         if (ok) { if (rs < 0) rs = x; } else if (rs >= 0) { ctx.fillRect(rs * TS, y * TS, (x - rs) * TS, TS); rs = -1; }
       } }
     }
+    PF.m('draw:сніг');
     // декалі
     for (const d of map.decals) {
       if (d.x < x0 - 2 || d.x > x1 + 2 || d.y < y0 - 2 || d.y > y1 + 2) continue;
@@ -349,13 +352,15 @@
       else { const gr = ctx.createRadialGradient(d.x * TS, d.y * TS, 2, d.x * TS, d.y * TS, d.r * TS); gr.addColorStop(0, 'rgba(20,14,10,' + d.a + ')'); gr.addColorStop(1, 'rgba(20,14,10,0)'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(d.x * TS, d.y * TS, d.r * TS, 0, 6.3); ctx.fill(); }
     }
     if (map.decals.length && map.decals[0].a < 0.02) map.decals.shift();
+    PF.m('draw:декалі');
     // зони
     if (RW.Storage) RW.Storage.draw(ctx, TS, map, x0, y0, x1, y1, ZONE_COL, R.time); else for (const zn of map.zones) {
       const col = ZONE_COL[zn.type]; ctx.fillStyle = U.rgba(col, 0.2); ctx.strokeStyle = U.rgba(col, 0.55); ctx.lineWidth = 1;
       for (const i of zn.cells) { const x = i % map.w, y = (i / map.w) | 0; if (x < x0 || x > x1 || y < y0 || y > y1) continue; ctx.fillRect(x * TS, y * TS, TS, TS); ctx.strokeRect(x * TS + 0.5, y * TS + 0.5, TS - 1, TS - 1); }
     }
+    PF.m('draw:зони');
     // предмети
-    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    if (!OFF.items) for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
       const arr = map.items.get(y * map.w + x); if (!arr) continue;
       for (const it of arr) {
         const ic = GFX.itemIcon(it.def); const n = it.n; const st = D.items[it.def].stack;
@@ -364,10 +369,11 @@
         if (it.forbid) { const bx = x * TS + 7, by = y * TS + 7; ctx.fillStyle = 'rgba(20,10,10,.75)'; ctx.beginPath(); ctx.arc(bx, by, 5.2, 0, 6.3); ctx.fill(); ctx.strokeStyle = '#ff5a4a'; ctx.lineWidth = 1.8; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(bx - 2.4, by - 2.4); ctx.lineTo(bx + 2.4, by + 2.4); ctx.moveTo(bx + 2.4, by - 2.4); ctx.lineTo(bx - 2.4, by + 2.4); ctx.stroke(); }
       }
     }
+    PF.m('draw:предмети');
     // будівлі та рослини
     const ents = ENTS; ents.length = 0;
     const seen = SEEN; seen.clear();
-    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    if (!OFF.bld) for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
       const i = y * map.w + x;
       const pl = map.plant[i];
       if (pl) {
@@ -382,24 +388,32 @@
     }
     for (const [i, t] of map.desig) { const x = i % map.w, y = (i / map.w) | 0; if (x < x0 || x > x1 || y < y0 || y > y1) continue; if (t === 'chop' && map.plant[i]) { if (!D.plants[map.plant[i].def].tree) drawDesig(x, y, 'chop'); } else if (t === 'mine') drawDesig(x, y, 'mine'); }
     for (const b of map.buildings) { if (b.decon && b.x >= x0 - 2 && b.x <= x1 + 2 && b.y >= y0 - 2 && b.y <= y1 + 2) drawDesig(b.x, b.y, 'decon'); }
+    PF.m('draw:збір будівель/рослин');
     // істоти
-    for (const p of g.pawns) { if (p.x < x0 - 2 || p.x > x1 + 2 || p.y < y0 - 2 || p.y > y1 + 2) continue; ents.push({ y: p.y, k: 'p', p }); }
-    for (const a of g.animals) { if (a.x < x0 - 2 || a.x > x1 + 2 || a.y < y0 - 2 || a.y > y1 + 2) continue; ents.push({ y: a.y, k: 'a', a }); }
-    ents.sort((a, b) => a.y - b.y);
+    if (!OFF.pawns) for (const p of g.pawns) { if (p.x < x0 - 2 || p.x > x1 + 2 || p.y < y0 - 2 || p.y > y1 + 2) continue; ents.push({ y: p.y, k: 'p', p }); }
+    if (!OFF.animals) for (const a of g.animals) { if (a.x < x0 - 2 || a.x > x1 + 2 || a.y < y0 - 2 || a.y > y1 + 2) continue; ents.push({ y: a.y, k: 'a', a }); }
+    ents.sort((a, b) => a.y - b.y); PF.m('draw:сортування');
     for (const e of ents) {
+      if (PF.on) { const t0 = performance.now(); drawEnt(e); PF.mm('  ↳ малювання: '+({t:'дерева',b:'будівлі',p:'люди',a:'тварини'}[e.k]||e.k), performance.now() - t0); continue; }
+      drawEnt(e);
+    }
+    function drawEnt(e) {
       if (e.k === 't') { const pl = e.pl; const spr = GFX.treeSprites[pl.def][pl.v % 3]; const sz = D.plants[pl.def].size; const wv = Math.sin(tm * 0.7 + pl.x * 0.5 + pl.y) * 0.6; ctx.drawImage(spr, e.x * TS + 16 - 32 * sz + wv * 0.35, e.yy * TS + 30 - 52 * sz, 64 * sz, 72 * sz); if (map.desig.get(pl.y * map.w + pl.x) === 'chop') drawDesig(e.x, e.yy, 'chop'); }
       else if (e.k === 'b') drawBuilding(e.b, g);
       else if (e.k === 'p') drawPawnEnt(e.p, g, ctx);
       else if (e.k === 'a') drawAnimalEnt(e.a, g);
     }
+    PF.m('draw:істоти+дерева+будівлі (всього)');
     // позначки «рубати» — маленька сокирка над деревом (малюється поверх крон)
     for (const [i, t] of map.desig) { if (t !== 'chop' || !map.plant[i]) continue; const x = i % map.w, y = (i / map.w) | 0; if (x < x0 - 1 || x > x1 + 1 || y < y0 - 1 || y > y1 + 1) continue; drawAxe(x * TS + 16, y * TS + 2 + Math.sin(R.time * 0.08 + x * 1.7 + y) * 1.3); }
+    PF.m('draw:позначки');
     // вогонь
     for (const f of map.fires.values()) {
       if (f.x < x0 - 1 || f.x > x1 + 1 || f.y < y0 - 1 || f.y > y1 + 1) continue;
       drawFire(f);
       if (Math.random() < 0.18 * f.int) fx.smoke(f.x + 0.5, f.y + 0.3);
     }
+    PF.m('draw:вогонь');
     // снаряди
     for (const b of g.projectiles) {
       ctx.save(); ctx.translate(b.x * TS, b.y * TS); ctx.rotate(Math.atan2(b.vy, b.vx));
@@ -407,8 +421,9 @@
       else { ctx.fillStyle = 'rgba(255,230,140,0.5)'; ctx.fillRect(-12, -0.9, 12, 1.8); ctx.fillStyle = '#fff3b0'; ctx.fillRect(-4, -1.2, 7, 2.4); }
       ctx.restore();
     }
+    PF.m('draw:снаряди');
     // частинки
-    if (!R.viewG) for (const p of parts) {
+    if (!R.viewG && !OFF.fx) for (const p of parts) {
       const a = p.life / p.max;
       if (p.t === 'swing') { ctx.save(); ctx.translate(p.x * TS, p.y * TS); ctx.rotate(p.ang); ctx.strokeStyle = 'rgba(255,255,255,' + a.toFixed(2) + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 9, -0.9 + (1 - a) * 1.8, -0.2 + (1 - a) * 1.8); ctx.stroke(); ctx.restore(); continue; }
       if (p.t === 'bolt') { ctx.strokeStyle = 'rgba(220,235,255,' + a.toFixed(2) + ')'; ctx.lineWidth = 3; ctx.beginPath(); let bx = p.x * TS + 10, by = p.y * TS - 400; ctx.moveTo(bx, by); while (by < p.y * TS) { by += 30; bx += (Math.random() - 0.5) * 36; ctx.lineTo(bx, by); } ctx.stroke(); continue; }
@@ -420,28 +435,33 @@
       ctx.globalAlpha = 1;
     }
     if (!R.viewG) for (const r of rings) { ctx.strokeStyle = U.rgba(r.c, 1 - r.t / 28); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(r.x * TS, r.y * TS, r.r * TS, 0, 6.3); ctx.stroke(); }
+    PF.m('draw:частинки');
     if (RW.Farming) RW.Farming.draw(ctx, TS, map, x0, y0, x1, y1, R.time);
     if (RW.Cooking) RW.Cooking.drawItems(ctx, TS, map, x0, y0, x1, y1, R.time);
     if (RW.Quality) { RW.Quality.drawItems(ctx, TS, map, x0, y0, x1, y1, R.time); RW.Quality.drawBuildings(ctx, TS, map, R.time); }
     if (RW.Disasters && !R.viewG) RW.Disasters.drawMeteors(ctx, TS, R.time);
     if (RW.Husbandry && !R.viewG) RW.Husbandry.drawOverlay(ctx, TS, R.time);
     if (RW.Prisoners && !R.viewG) RW.Prisoners.drawOverlay(ctx, TS, R.time);
-    if (RW.Layers) RW.Layers.draw(ctx, TS, map, x0, y0, x1, y1, R.time);
-    if (!R.viewG) for (const f of R.worldOver) { try { f(ctx, TS, map, x0, y0, x1, y1, R.time); } catch (e) { console.error(e); } }
+    PF.m('draw:модулі (ферми/кухня/якість…)');
+    if (RW.Layers) RW.Layers.draw(ctx, TS, map, x0, y0, x1, y1, R.time); PF.m('draw:Layers');
+    if (!R.viewG && !OFF.hooks) for (let hi = 0; hi < R.worldOver.length; hi++) { const f = R.worldOver[hi]; try { f(ctx, TS, map, x0, y0, x1, y1, R.time); } catch (e) { console.error(e); } PF.m('draw:ефект #' + hi + ' ' + (f.pfName || f.name || '')); }
     if (RW.Traders && !R.viewG) RW.Traders.draw(ctx, TS, R.time);
     if (RW.Rel && !R.viewG) RW.Rel.drawParty(ctx, TS, R.time);
     if (RW.FX2 && !R.viewG) RW.FX2.draw(ctx, TS);
+    PF.m('draw:Traders/FX2/свято');
     // капсули
     if (!R.viewG) for (const p of pods) drawPod(p);
     if (R.cutDraw && !R.viewG) R.cutDraw(ctx, TS);
     ctx.restore();
 
+    PF.m('draw:капсули/ctx.restore');
     // освітлення
-    if (S.lighting) drawLighting(g, map, x0, y0, x1, y1, ox, oy, z);
+    if (S.lighting && !OFF.lighting) drawLighting(g, map, x0, y0, x1, y1, ox, oy, z);
+    PF.m('draw:освітлення');
     // погода
-    drawWeather(g);
+    if (!OFF.weather) drawWeather(g); PF.m('draw:погода');
     if (RW.Disasters && !R.viewG) RW.Disasters.drawScreen(ctx, W, H);
-    if (!R.viewG) for (const f of R.screenOver) { try { f(ctx, W, H, R.time); } catch (e) { console.error(e); } }
+    if (!R.viewG && !OFF.hooks) for (let hi = 0; hi < R.screenOver.length; hi++) { const f = R.screenOver[hi]; try { f(ctx, W, H, R.time); } catch (e) { console.error(e); } PF.m('draw:екранний ефект #' + hi + ' ' + (f.pfName || f.name || '')); }
     // оверлей UI у світових координатах
     ctx.save(); ctx.translate(ox, oy); ctx.scale(cam.zoom, cam.zoom);
     if (RW.UI && RW.UI.drawWorldOverlay && !R.viewG) RW.UI.drawWorldOverlay(ctx);
@@ -450,6 +470,7 @@
     if (!R.viewG) for (const t of texts) { const a = 1 - t.t / 55; ctx.globalAlpha = Math.min(1, a * 1.6); ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillText(t.txt, t.x * TS + 1, t.y * TS + 1); ctx.fillStyle = t.color; ctx.fillText(t.txt, t.x * TS, t.y * TS); }
     ctx.globalAlpha = 1;
     ctx.restore();
+    PF.m('draw:UI-оверлей/текст');
     // спалах блискавки
     if (g.flash > 0) { ctx.fillStyle = 'rgba(230,240,255,' + (g.flash / 12 * 0.5).toFixed(2) + ')'; ctx.fillRect(0, 0, W, H); g.flash--; }
   }

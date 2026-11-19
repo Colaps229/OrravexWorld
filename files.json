@@ -1,7 +1,7 @@
 {
- "version": "0.8.0",
- "build": "mwmkkvwg",
- "date": "2026-11-18T20:24:27.520Z",
+ "version": "0.8.1",
+ "build": "mwnp2wbg",
+ "date": "2026-11-19T15:18:12.508Z",
  "files": [
   "README.md",
   "css/style.css",
@@ -35,6 +35,7 @@
   "js/mp.js",
   "js/mpmenu.js",
   "js/pawn.js",
+  "js/perf.js",
   "js/planet.js",
   "js/portraits.js",
   "js/prisoners.js",
