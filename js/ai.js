@@ -769,7 +769,7 @@
     if ((G().tick & 31) === 0 && RW.A) RW.A.sfx('hammer');
     if (bp.work >= bp.total) {
       map.removeBlueprint(bp);
-      const b = map.addBuilding(bp.def, bp.x, bp.y, bp.rot);
+      const b = map.addBuilding(bp.def, bp.x, bp.y, bp.rot); if (b) b.own = 1;
       if (b.def.fuel) b.fuel = 0;
       if (b.def.battery) b.charge = 0;
       g.stats.built++; g.stats.bld = g.stats.bld || {}; g.stats.bld[bp.def] = (g.stats.bld[bp.def] || 0) + 1;

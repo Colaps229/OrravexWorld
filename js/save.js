@@ -18,7 +18,7 @@
     o.terrain = U.u8ToB64(m.terrain); o.blk = U.u8ToB64(m.blk); o.floor = U.u8ToB64(m.floor); o.mroof = U.u8ToB64(m.mroof); o.gv = U.u8ToB64(m.groundVar);
     o.plants = []; for (let i = 0; i < m.n; i++) { const p = m.plant[i]; if (p) o.plants.push([p.def, p.x, p.y, +p.growth.toFixed(3), Math.round(p.hp), p.age | 0, p.blight ? 1 : 0, p.v]); }
     o.items = []; for (const arr of m.items.values()) for (const it of arr) o.items.push({ def: it.def, n: it.n, i: it.i, forbid: it.forbid, age: it.age, data: it.data });
-    o.blds = m.buildings.map(b => ({ id: b.id, key: b.key, x: b.x, y: b.y, rot: b.rot, hp: b.hp, fuel: b.fuel, owner: b.owner, on: b.on, bills: b.bills, buf: b.buf, charge: b.charge, occupant: b.occupant || null, decon: !!b.decon, age: b.age }));
+    o.blds = m.buildings.map(b => ({ id: b.id, key: b.key, x: b.x, y: b.y, rot: b.rot, hp: b.hp, fuel: b.fuel, owner: b.owner, on: b.on, bills: b.bills, buf: b.buf, charge: b.charge, occupant: b.occupant || null, decon: !!b.decon, age: b.age, own: b.own ? 1 : 0 }));
     o.bps = m.blueprints.map(b => ({ def: b.def, x: b.x, y: b.y, rot: b.rot, have: b.have, work: b.work }));
     o.zones = m.zones.map(z => ({ type: z.type, cells: Array.from(z.cells), filter: z.filter, crop: z.crop, sow: z.sow, priority: z.priority, pv: 2, name: z.name, fert: z.fert, cull: z.cull }));
     o.desig = Array.from(m.desig.entries());
@@ -63,7 +63,7 @@
     for (let i = 0; i < m.n; i++) m.updateCost(i);
     for (const it of o.items) { const x = { id: U.nextId(), def: it.def, n: it.n, i: it.i, forbid: it.forbid, age: it.age, res: null, data: it.data }; m._putStack(x, it.i); }
     const byId = {};
-    for (const bd of o.blds) { const b = m.addBuilding(bd.key, bd.x, bd.y, bd.rot); if (!b) continue; b.id = bd.id; b.hp = bd.hp; b.fuel = bd.fuel; b.owner = bd.owner; b.on = bd.on; b.bills = bd.bills || []; b.buf = bd.buf || {}; b.charge = bd.charge; b.occupant = bd.occupant; b.decon = bd.decon; b.age = bd.age || 0; byId[b.id] = b; }
+    for (const bd of o.blds) { const b = m.addBuilding(bd.key, bd.x, bd.y, bd.rot); if (!b) continue; b.id = bd.id; b.hp = bd.hp; b.fuel = bd.fuel; b.owner = bd.owner; b.on = bd.on; b.bills = bd.bills || []; b.buf = bd.buf || {}; b.charge = bd.charge; b.occupant = bd.occupant; b.decon = bd.decon; b.age = bd.age || 0; if (bd.own) b.own = 1; byId[b.id] = b; }
     for (const bp of o.bps) { const b = m.addBlueprint(bp.def, bp.x, bp.y, bp.rot); b.have = bp.have; b.work = bp.work; }
     for (const zd of o.zones) { const z = new RW.Zone(zd.type); z.filter = zd.filter; z.crop = zd.crop; z.sow = zd.sow; z.priority = zd.pv === 2 ? zd.priority : [1, 2, 3][zd.priority == null ? 1 : zd.priority]; z.name = zd.name || ''; z.fert = zd.fert; z.cull = zd.cull; for (const i of zd.cells) { z.cells.add(i); m.zoneAt[i] = z; } m.zones.push(z); }
     m.desig = new Map(o.desig); m.decals = o.decals || [];
