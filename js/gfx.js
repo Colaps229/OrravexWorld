@@ -584,17 +584,29 @@
     if (style === 0) return;
     const front = face === 2;
     if (style === 1) { x.beginPath(); x.arc(0, -7.2, 5.6, Math.PI * 1.02, Math.PI * 1.98); x.lineTo(5.4, -7); x.lineTo(-5.4, -7); x.fill(); if (face === 2) { x.beginPath(); x.arc(0, -7.2, 5.6, 0, 6.3); x.fill(); } }
-    else if (style === 2) { x.beginPath(); x.arc(0, -7.4, 6, 0, 6.3); x.fill(); x.fillRect(-6, -7.2, 12, 11); if (face !== 2) { x.fillStyle = 'rgba(0,0,0,0)'; } }
+    else if (style === 2) { // довге волосся: шапка + пасма по боках; основна маса — ззаду тулуба (backHair)
+      x.beginPath(); x.arc(0, -7.3, 5.9, Math.PI * 0.98, Math.PI * 2.02); x.lineTo(5.4, -7.2); x.lineTo(-5.4, -7.2); x.fill();
+      if (face === 2) { x.beginPath(); x.moveTo(-5.7, -9); x.lineTo(-5.4, -1); x.quadraticCurveTo(0, 1.6, 5.4, -1); x.lineTo(5.7, -9); x.arc(0, -7.3, 5.9, 0, Math.PI, true); x.fill(); x.strokeStyle = 'rgba(14,9,6,0.7)'; x.lineWidth = 0.6; x.stroke(); }
+      else if (face === 0) { x.fillRect(-6, -8, 1.8, 6.4); x.fillRect(4.2, -8, 1.8, 6.4); }
+      else { x.fillRect(face === 1 ? -5.6 : 3.8, -8, 1.8, 5.2); } }
     else if (style === 3) { x.fillRect(-1.6, -13.4, 3.2, 8.5); x.beginPath(); x.arc(0, -7.2, 5.6, Math.PI * 1.05, Math.PI * 1.95); x.lineTo(0, -7); x.fill(); }
-    else if (style === 4) { x.beginPath(); x.arc(0, -7.2, 5.7, Math.PI * 1.02, Math.PI * 1.98); x.lineTo(5.4, -7); x.lineTo(-5.4, -7); x.fill(); if (face === 2) { x.beginPath(); x.arc(0, -7.2, 5.7, 0, 6.3); x.fill(); } x.beginPath(); x.ellipse(0, -2.5 + (face === 0 ? -3 : 0), 2.2, 5, 0, 0, 6.3); if (face !== 0) x.fill(); }
+    else if (style === 4) { x.beginPath(); x.arc(0, -7.2, 5.7, Math.PI * 1.02, Math.PI * 1.98); x.lineTo(5.4, -7); x.lineTo(-5.4, -7); x.fill(); if (face === 2) { x.beginPath(); x.arc(0, -7.2, 5.7, 0, 6.3); x.fill(); } if (face === 2) { x.beginPath(); x.ellipse(0, -3.4, 1.9, 4, 0, 0, 6.3); x.fill(); } }
     else if (style === 5) { x.beginPath(); x.arc(0, -7.2, 5.6, Math.PI * 1.02, Math.PI * 1.98); x.lineTo(5.4, -7); x.lineTo(-5.4, -7); x.fill(); if (face === 2) { x.beginPath(); x.arc(0, -7.2, 5.6, 0, 6.3); x.fill(); } x.beginPath(); x.arc(0, -13.4, 3, 0, 6.3); x.fill(); }
+  }
+  // волосся «за спиною»: малюється до тулуба
+  function backHair(x, style, color, face) {
+    if (style !== 2 && style !== 4) return; if (face === 2) return;
+    x.save(); x.fillStyle = color; x.strokeStyle = 'rgba(14,9,6,0.7)'; x.lineWidth = 0.6;
+    if (style === 2) { x.beginPath(); if (face === 0) { x.moveTo(-5.8, -9); x.lineTo(-5.6, -0.5); x.quadraticCurveTo(0, 2.2, 5.6, -0.5); x.lineTo(5.8, -9); x.closePath(); } else { const d = face === 1 ? -1 : 1; x.ellipse(d * 2.6, -4.6, 3.4, 6, 0, 0, 6.3); } x.fill(); x.stroke(); }
+    else { const d = face === 1 ? -1 : face === 3 ? 1 : 0; x.beginPath(); x.ellipse(d * 4.2, -5.4, 1.8, 4.2, d * 0.25, 0, 6.3); if (d) { x.fill(); x.stroke(); } }
+    x.restore();
   }
   // Малює пішака у координатах 32px з центром у (0,0); s — масштаб
   GFX.drawPawn = function (ctx, p, px, py, s, o) {
     o = o || {}; const look = p.look; const t = o.time || 0;
     ctx.save(); ctx.translate(px, py); ctx.scale(s, s);
     const face = p.face || 0; const moving = p.moving && !p.downed && !p.sleeping; const ph = p.phase || 0;
-    const bw = (D.bodyTypes.find(b => b.id === look.body) || D.bodyTypes[1]).w;
+    const bw = (D.bodyTypes.find(b => b.id === look.body) || D.bodyTypes[1]).w * (p.gender === 'f' ? 0.84 : p.gender === 'm' ? 1.1 : 1);
     const lying = p.downed || p.sleeping || p.dead;
     // тінь
     { const sx = lying ? 11 : 8.5 * bw, sy = lying ? 5 : 3.8; ctx.save(); ctx.translate(1.5, 6.5); ctx.scale(1, sy / sx); const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, sx); sg.addColorStop(0, 'rgba(0,0,0,0.42)'); sg.addColorStop(0.65, 'rgba(0,0,0,0.22)'); sg.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(0, 0, sx, 0, 6.3); ctx.fill(); ctx.restore(); }
@@ -621,6 +633,7 @@
     if (side) { const l1 = -2.4 + swing * dir, l2 = 0.2 - swing * dir; leg(l2, 1, 2.6, 5.4); shoe(l2 - (dir > 0 ? 0 : 0.6), 6.1, 3.2); leg(l1, 1, 2.6, 5.4); shoe(l1 - (dir > 0 ? 0 : 0.6), 6.1, 3.2); }
     else { const f = face === 0 ? 1 : -1; const y1 = 1 + swing * 0.5 * f, y2 = 1 - swing * 0.5 * f; leg(-3.6, y1, 3, 5.4); shoe(-3.9, y1 + 5.1, 3.6); leg(0.6, y2, 3, 5.4); shoe(0.3, y2 + 5.1, 3.6); }
     ctx.translate(0, bob);
+    { const hx0 = face === 1 ? 1.2 : face === 3 ? -1.2 : 0; ctx.save(); ctx.translate(hx0, 0); backHair(ctx, look.hairStyle, look.hair, face); ctx.restore(); }
     // тулуб
     const ap = p.equip && p.equip.apparel;
     let shirt = look.shirt;
