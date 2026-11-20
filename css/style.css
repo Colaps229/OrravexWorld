@@ -119,6 +119,8 @@ input[type=range]{accent-color:var(--gold)}
 #cs-cap { position: absolute; left: 50%; bottom: 11vh; transform: translateX(-50%); max-width: 80vw; padding: 10px 22px; color: #f1ead8; font: 600 20px/1.35 Georgia, 'Times New Roman', serif; text-align: center; letter-spacing: .3px; text-shadow: 0 2px 8px #000, 0 0 2px #000; background: linear-gradient(90deg, transparent, rgba(0,0,0,.55) 15%, rgba(0,0,0,.55) 85%, transparent); opacity: 0; }
 #cs-cap.show { animation: csCap 5.5s ease forwards; }
 @keyframes csCap { 0% { opacity: 0; transform: translate(-50%, 8px); } 10%, 85% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; } }
+#cs-sub { position: absolute; left: 50%; bottom: 12vh; transform: translateX(-50%); max-width: 78vw; padding: 9px 20px; color: #f4f0e6; font: 600 21px/1.35 'Segoe UI', Roboto, sans-serif; text-align: center; text-shadow: 0 2px 6px #000, 0 0 2px #000; background: linear-gradient(90deg, rgba(0,0,0,0), rgba(0,0,0,.6) 15%, rgba(0,0,0,.6) 85%, rgba(0,0,0,0)); opacity: 0; transition: opacity .25s; pointer-events: none; }
+#cs-sub.on { opacity: 1; } #cs-sub.ai { font-family: 'Consolas', 'Courier New', monospace; letter-spacing: .6px; }
 #cs-skip { position: absolute; right: 22px; bottom: calc(9vh + 14px); pointer-events: auto; background: rgba(20,24,30,.75); color: #e8e2d0; border: 1px solid rgba(255,255,255,.3); border-radius: 4px; padding: 7px 14px; font: 600 14px sans-serif; cursor: pointer; }
 #cs-skip:hover { background: rgba(60,70,84,.9); }
 

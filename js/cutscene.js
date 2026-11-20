@@ -48,7 +48,7 @@
   // ---------- DOM ----------
   function mkDom() {
     const d = document.createElement('div'); d.id = 'cutscene';
-    d.innerHTML = '<canvas id="cs-cv"></canvas><div class="cs-bar cs-top"></div><div class="cs-bar cs-bot"></div><div id="cs-cap"></div><button id="cs-skip">Пропустити ▸▸</button>';
+    d.innerHTML = '<canvas id="cs-cv"></canvas><div class="cs-bar cs-top"></div><div class="cs-bar cs-bot"></div><div id="cs-cap"></div><div id="cs-sub"></div><button id="cs-skip">Пропустити ▸▸</button>';
     document.body.appendChild(d); return d;
   }
 
@@ -65,6 +65,7 @@
     search: for (let r = 0; r < 14; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; const tx = cx + dx - 2, ty = cy + dy - 2; if (okSpot(g.map, tx, ty)) { best = [tx, ty]; break search; } }
     st.spots = spots.filter(s => !(s[0] >= (best ? best[0] : 0) - 1 && s[0] <= (best ? best[0] : 0) + 6 && s[1] >= (best ? best[1] : 0) - 1 && s[1] <= (best ? best[1] : 0) + 5)); if (st.spots.length < 4) st.spots = spots; st.wp = best || [cx - 2, cy - 2];
     clearSpot(g.map, st.wp[0], st.wp[1]);
+    st.dlg = buildDialog(g, crew);
     // точки виходу екіпажу — перед люком, під кораблем
     st.hx = st.wp[0] + 3.3; st.hy = st.wp[1] + 3.1;
     cv.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;'; resize();
@@ -117,10 +118,95 @@
     x.drawImage(SHIP, 0, 0); x.restore();
   }
 
+  // ---------- діалоги ----------
+  const nmOf = p => (p && p.name && (p.name.nick || p.name.first)) || 'Колоніст';
+  const SPC = ['#ffd27a', '#8fd4ff', '#ff9ec0', '#a8f0a0', '#d6b0ff'];
+  function buildDialog(g, crew) {
+    const n = crew.length || 1; const A = 0, B = 1 % n, Cc = 2 % n, D4 = 3 % n; const id = (g.scenario && g.scenario.id) || 'crash';
+    const S = {
+      crash: [
+        [[300, A, 'Дивіться… Це вона. Наша нова домівка.'], [2200, B, 'Якщо ми взагалі туди долетимо. Паливо на нулі.'], [4300, -1, 'УВАГА. Тиск у правому двигуні падає.'], [5700, A, 'Що це було?! Хто торкався керування?!'], [7000, B, 'Це не ми! Нас затягує гравітація!'], [8200, -1, 'Вхід в атмосферу через десять секунд.']],
+        [[250, Cc, 'ЩИТИ ГОРЯТЬ! Ми її не втримаємо!'], [1100, A, 'ТРИМАЙТЕСЬ! Зараз вдаримо!'], [1900, D4, 'Мамо-о-о-о!..'], [2600, -1, 'КРИТИЧНА ПОМИЛКА. УДАР НЕМИНУЧИЙ.']]],
+      tribe: [
+        [[300, A, 'Вогняна птаха несе нас на нову землю. Духи не залишили нас.'], [2300, B, 'Птаха кашляє димом. Мені це не подобається.'], [4300, -1, 'Тиск у двигуні падає. Тиск у двигуні падає.'], [5700, A, 'Що це за голос?! Хто кричить у залізній утробі?!'], [7000, B, 'Земля тягне нас донизу! Тримайтесь за кістки птахи!'], [8200, -1, 'Вхід в атмосферу через десять секунд.']],
+        [[250, Cc, 'Вона палає! Птаха палає!'], [1100, A, 'ТРИМАЙТЕСЬ! Духи, захистіть нас!'], [1900, D4, 'Я не хочу вмирати!..'], [2600, -1, 'КРИТИЧНА ПОМИЛКА. УДАР НЕМИНУЧИЙ.']]],
+      rich: [
+        [[300, A, 'Прилади показують багату руду під скелями. Якщо сядемо — ми заможні.'], [2200, B, 'Якщо. Двигуни працюють на останніх краплях.'], [4300, -1, 'УВАГА. Тиск у правому двигуні падає.'], [5700, A, 'Перенаправ потужність на щити! Швидше!'], [7000, B, 'Нічого не виходить! Нас затягує гравітація!'], [8200, -1, 'Вхід в атмосферу через десять секунд.']],
+        [[250, B, 'Щити на межі! Ми розвалимось!'], [1100, A, 'ТРИМАЙСЯ! Зараз вдаримо!'], [1900, B, 'Усі карти… усі дані…'], [2600, -1, 'КРИТИЧНА ПОМИЛКА. УДАР НЕМИНУЧИЙ.']]],
+      naked: [
+        [[300, A, 'Тільки б долетіти. Тільки б долетіти…'], [2300, A, 'Усе буде добре. Я вижив у гіршому.'], [4300, -1, 'УВАГА. Тиск у правому двигуні падає.'], [5700, A, 'Ні, ні, ні… Тільки не зараз!'], [7000, A, 'Нас затягує! Керування не слухається!'], [8200, -1, 'Вхід в атмосферу через десять секунд.']],
+        [[250, A, 'Щити горять! Тримайся, тримайся!'], [1250, A, 'Це кінець?!'], [2000, A, 'Ні! Я вижию! Я ВИЖИВУ!'], [2700, -1, 'КРИТИЧНА ПОМИЛКА. УДАР НЕМИНУЧИЙ.']]]
+    };
+    const set = S[id] || S.crash; const mapL = a => a.map(l => ({ at: l[0], who: l[1], text: l[2], done: false }));
+    return { 1: mapL(set[0]), 2: mapL(set[1]) };
+  }
+  function sayLine(l) {
+    if (!st) return; const el = st.dom.querySelector('#cs-sub'); const who = l.who; const p = who >= 0 ? st.crew[who % st.crew.length] : null;
+    const name = p ? nmOf(p) : 'Бортовий комп\'ютер'; const col = p ? SPC[who % SPC.length] : '#7fe8ff';
+    el.innerHTML = '<b style="color:' + col + '">' + name + (p ? '' : ' ▸') + ':</b> ' + String(l.text).replace(/</g, '&lt;'); el.className = (p ? '' : 'ai ') + 'on'; st.subUntil = performance.now() + 2500; st.talk = p ? who : -1; st.talkUntil = performance.now() + 2200;
+    if (!p && RW.A) try { RW.A.sfx('ui'); } catch (e) { }
+  }
+  function clearSub() { if (!st) return; const el = st.dom.querySelector('#cs-sub'); el.className = ''; el.innerHTML = ''; }
+  function runLines(arr, tc) {
+    if (!arr) return; for (const l of arr) if (!l.done && tc >= l.at) { l.done = true; sayLine(l); }
+    if (st.subUntil && performance.now() > st.subUntil) { st.dom.querySelector('#cs-sub').classList.remove('on'); st.subUntil = 0; }
+  }
+  // ---------- кабіна ----------
+  const hsh = (a, b) => { let h = (a * 374761393 + b * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; };
+  function drawCabin(x, W, H, tc, kind) {
+    const alarm = kind === 1 ? Math.max(0, Math.min(1, (tc - 4000) / 1400)) : 1; const inten = kind === 1 ? alarm * 0.9 : 1.3 + tc / 3500;
+    x.save(); const shk = (kind === 1 ? alarm * 4 + 0.6 : 7 + tc * 0.004) ; x.translate(W / 2 + (Math.random() - 0.5) * shk, H / 2 + (Math.random() - 0.5) * shk); x.scale(1.05, 1.05); x.translate(-W / 2, -H / 2);
+    const bg = x.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#0b0f15'); bg.addColorStop(1, '#1b232d'); x.fillStyle = bg; x.fillRect(-20, -20, W + 40, H + 40);
+    // ілюмінатор-вікно
+    const wx = W * 0.17, wy = H * 0.12, ww = W * 0.66, wh = H * 0.44;
+    x.save(); x.beginPath(); x.rect(wx, wy, ww, wh); x.clip(); x.translate(wx, wy); x.scale(ww / W, wh / H);
+    drawSpace(x, W, H, tc + 3000, kind === 1 ? 0.02 + tc / 9400 * 0.3 : 1);
+    if (kind === 1 && tc > 6800) { const f = Math.min(1, (tc - 6800) / 2600); const og = x.createLinearGradient(0, H, 0, H * 0.3); og.addColorStop(0, 'rgba(255,140,50,' + 0.55 * f + ')'); og.addColorStop(1, 'rgba(255,120,40,0)'); x.fillStyle = og; x.fillRect(0, 0, W, H); }
+    if (kind === 2) { x.globalCompositeOperation = 'lighter'; const fl = 0.55 + 0.25 * Math.sin(tc * 0.06) + Math.random() * 0.15; const og = x.createRadialGradient(W * 0.5, H * 1.1, 10, W * 0.5, H * 0.9, H * 1.1); og.addColorStop(0, 'rgba(255,230,160,' + fl + ')'); og.addColorStop(0.4, 'rgba(255,120,40,' + fl * 0.7 + ')'); og.addColorStop(1, 'rgba(255,60,10,0)'); x.fillStyle = og; x.fillRect(0, 0, W, H); x.strokeStyle = 'rgba(255,210,120,0.55)'; x.lineWidth = 3; for (let i = 0; i < 26; i++) { const sx = hsh(i, 3) * W, L = 120 + hsh(i, 7) * 360, yy = ((tc * (1.2 + hsh(i, 9)) * 1.6 + hsh(i, 11) * H) % (H + L)) - L; x.beginPath(); x.moveTo(sx, yy); x.lineTo(sx + 20, yy + L); x.stroke(); } x.globalCompositeOperation = 'source-over'; }
+    x.restore();
+    // тріщини на склі
+    if (kind === 2 && tc > 1700) { x.strokeStyle = 'rgba(210,235,255,0.7)'; x.lineWidth = 1.5; const cx0 = wx + ww * 0.62, cy0 = wy + wh * 0.4; for (let i = 0; i < 9; i++) { const a = hsh(i, 1) * 6.28, L = Math.min(1, (tc - 1700) / 600) * (60 + hsh(i, 2) * 200); x.beginPath(); x.moveTo(cx0, cy0); x.lineTo(cx0 + Math.cos(a) * L * 0.5 + 8, cy0 + Math.sin(a) * L * 0.5); x.lineTo(cx0 + Math.cos(a + 0.2) * L, cy0 + Math.sin(a + 0.2) * L); x.stroke(); } }
+    // рама
+    x.lineWidth = 14; x.strokeStyle = '#2a323d'; x.strokeRect(wx - 7, wy - 7, ww + 14, wh + 14); x.lineWidth = 3; x.strokeStyle = 'rgba(180,200,220,0.35)'; x.strokeRect(wx - 12, wy - 12, ww + 24, wh + 24);
+    for (const [bx, by] of [[wx - 7, wy - 7], [wx + ww + 7, wy - 7], [wx - 7, wy + wh + 7], [wx + ww + 7, wy + wh + 7]]) { x.fillStyle = '#9aa6b2'; x.beginPath(); x.arc(bx, by, 5, 0, TAU); x.fill(); x.fillStyle = '#20262c'; x.fillRect(bx - 3, by - 0.8, 6, 1.6); }
+    // стеля й труби
+    const cg = x.createLinearGradient(0, 0, 0, H * 0.1); cg.addColorStop(0, '#05070a'); cg.addColorStop(1, '#222b35'); x.fillStyle = cg; x.fillRect(-20, -20, W + 40, H * 0.1 + 20);
+    for (let k = 0; k < 3; k++) { x.fillStyle = '#39434f'; x.fillRect(-20, H * 0.03 + k * 9, W + 40, 5); x.fillStyle = 'rgba(255,255,255,0.15)'; x.fillRect(-20, H * 0.03 + k * 9, W + 40, 1.4); }
+    // бічні панелі з індикаторами
+    for (const side of [0, 1]) { const px = side ? W * 0.84 : -10, pw = W * 0.17; const pg = x.createLinearGradient(px, 0, px + pw, 0); pg.addColorStop(0, side ? '#1a2029' : '#10151b'); pg.addColorStop(1, side ? '#10151b' : '#1a2029'); x.fillStyle = pg; x.fillRect(px, H * 0.1, pw + 10, H * 0.8);
+      for (let r = 0; r < 10; r++) for (let c2 = 0; c2 < 5; c2++) { const on = hsh(r * 5 + c2, (tc / (alarm > 0.3 ? 120 : 600) | 0) + side * 7) > (alarm > 0.3 ? 0.4 : 0.65); const col = alarm > 0.3 && hsh(r, c2 + side) > 0.55 ? '#ff4a3a' : hsh(r, c2) > 0.5 ? '#46e08a' : '#ffbf40'; x.fillStyle = on ? col : 'rgba(30,38,46,0.9)'; x.fillRect(px + 18 + c2 * (pw / 6.4), H * 0.16 + r * H * 0.065, 10, 8); if (on) { x.fillStyle = col; x.globalAlpha = 0.25; x.fillRect(px + 15 + c2 * (pw / 6.4), H * 0.16 + r * H * 0.065 - 3, 16, 14); x.globalAlpha = 1; } } }
+    // екіпаж
+    const n = st.crew.length; const gap = Math.min(W * 0.18, 240); const sc = Math.max(2.4, Math.min(H / 66, 9)); const baseY = H * 0.77;
+    for (let i = 0; i < n; i++) {
+      const p = st.crew[i]; const cx = W * 0.5 + (i - (n - 1) / 2) * gap; const panic = kind === 1 ? alarm : 1.2;
+      const jx = (Math.random() - 0.5) * 3 * panic * (kind === 2 ? 2.2 : 1), jy = (Math.random() - 0.5) * 3 * panic + Math.sin(tc * 0.01 + i) * 0.8;
+      const talking = st.talk === i && performance.now() < (st.talkUntil || 0);
+      const turn = panic > 0.4 && ((tc / 650 + i * 1.7) % 4.2 < 0.7) || talking && kind === 2;
+      const of = p.face, om = p.moving, osl = p.sleeping, od = p.downed; p.face = turn ? 0 : 2; p.moving = false; p.sleeping = false; p.downed = false;
+      try { GFX().drawPawn(x, p, cx + jx, baseY + jy, sc, { time: tc * 0.06, hideWeapon: true }); } catch (e) { }
+      p.face = of; p.moving = om; p.sleeping = osl; p.downed = od;
+      // пульт перед пілотом
+      const cw = sc * 11; const cyy = baseY + sc * 1.4; const cg2 = x.createLinearGradient(0, cyy, 0, H); cg2.addColorStop(0, '#2c3540'); cg2.addColorStop(0.15, '#1a2129'); cg2.addColorStop(1, '#0c1015'); x.fillStyle = cg2; x.fillRect(cx - cw, cyy, cw * 2, H - cyy + 20); x.fillStyle = 'rgba(255,255,255,0.18)'; x.fillRect(cx - cw, cyy, cw * 2, 2);
+      const scr = alarm > 0.3 && ((tc / 220 | 0) + i) % 2 ? '#ff5040' : '#47c8ff'; x.fillStyle = scr; x.globalAlpha = 0.9; x.fillRect(cx - cw * 0.6, cyy + 8, cw * 1.2, sc * 2.6); x.globalAlpha = 0.25; x.fillRect(cx - cw * 0.6 - 4, cyy + 4, cw * 1.2 + 8, sc * 2.6 + 8); x.globalAlpha = 1;
+      x.fillStyle = 'rgba(0,0,0,0.5)'; for (let l = 0; l < 4; l++) x.fillRect(cx - cw * 0.6 + 4, cyy + 12 + l * sc * 0.55, cw * 1.2 * (0.3 + 0.6 * hsh(l, (tc / 300 | 0) + i)), 2);
+    }
+    // іскри з стелі, дим
+    if (alarm > 0.2) { x.globalCompositeOperation = 'lighter'; const ns = 16 + (kind === 2 ? 20 : 0); for (let i = 0; i < ns; i++) { const sx = hsh(i, 21) * W, sy = ((tc * (0.25 + hsh(i, 5) * 0.5) + hsh(i, 6) * H) % H); x.fillStyle = i % 3 ? '#ffd070' : '#ff7a30'; x.globalAlpha = 0.8 * alarm; x.fillRect(sx, sy, 2, 2 + hsh(i, 8) * 5); } x.globalAlpha = 1; x.globalCompositeOperation = 'source-over'; }
+    if (inten > 0.6) { const sg = x.createLinearGradient(0, 0, 0, H * 0.6); sg.addColorStop(0, 'rgba(30,26,24,' + Math.min(0.7, (inten - 0.5) * 0.4) + ')'); sg.addColorStop(1, 'rgba(30,26,24,0)'); x.fillStyle = sg; x.fillRect(0, 0, W, H); }
+    // аварійне червоне світло (маяк)
+    if (alarm > 0) { const bp = Math.sin(tc * 0.011) * 0.5 + 0.5; x.fillStyle = 'rgba(255,24,12,' + (alarm * (0.07 + 0.2 * bp)).toFixed(3) + ')'; x.fillRect(-20, -20, W + 40, H + 40); x.globalCompositeOperation = 'lighter'; const ba = tc * 0.008; const bgx = x.createRadialGradient(W / 2, 0, 5, W / 2, 0, H * 0.9); bgx.addColorStop(0, 'rgba(255,60,40,' + (alarm * 0.45) + ')'); bgx.addColorStop(1, 'rgba(255,60,40,0)'); x.save(); x.translate(W / 2, 0); x.rotate(Math.sin(ba) * 0.9); x.translate(-W / 2, 0); x.fillStyle = bgx; x.beginPath(); x.moveTo(W / 2, 0); x.lineTo(W / 2 - W * 0.18, H); x.lineTo(W / 2 + W * 0.18, H); x.closePath(); x.fill(); x.restore(); x.globalCompositeOperation = 'source-over'; }
+    // віньєтка
+    const vg = x.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.95); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.65)'); x.fillStyle = vg; x.fillRect(-20, -20, W + 40, H + 40);
+    x.restore();
+    // вступ із чорного
+    if (kind === 1 && tc < 700) { x.fillStyle = 'rgba(0,0,0,' + (1 - tc / 700) + ')'; x.fillRect(0, 0, W, H); }
+  }
+  const GFX = () => RW.GFX;
+
   // ---------- оновлення ----------
   C.update = function () {
     if (!st) return; const now = performance.now(); const el = now - st.t0; const W = st.W, H = st.H, x = st.x;
-    if (st.phase === 'space' || st.phase === 'entry') {
+    if (st.phase === 'space' || st.phase === 'entry' || st.phase === 'cabin1' || st.phase === 'cabin2') {
       x.globalAlpha = 1;
       if (st.phase === 'space') {
         const T = 6000; const p = Math.min(1, el / T);
@@ -131,7 +217,16 @@
         x.globalCompositeOperation = 'lighter'; const tg = x.createLinearGradient(sx - 400 * sc, 0, sx, 0); tg.addColorStop(0, 'rgba(120,180,255,0)'); tg.addColorStop(1, 'rgba(160,210,255,0.25)'); x.fillStyle = tg; x.fillRect(sx - 400 * sc, sy - 18 * sc, 400 * sc, 36 * sc); x.globalCompositeOperation = 'source-over';
         drawShipAt(x, sx, sy, sc, 0.18 + p * 0.25, 60 + 40 * p, el * 0.02);
         if (el > 3200 && st.capT !== 'b') { st.capT = 'b'; caption('Двигуни ледь працюють. Паливо закінчується… Гравітація затягує корабель.'); }
-        if (el > T) { st.phase = 'entry'; st.t1 = now; caption('ВХІД В АТМОСФЕРУ! Щити не витримують!'); if (RW.A) try { RW.A.sfx('rumble'); } catch (e) { } }
+        if (el > T) { st.phase = 'cabin1'; st.tc = now; st.sayI = 0; caption(''); st.cap.classList.remove('show'); if (RW.A) try { RW.A.sfx('whoosh'); } catch (e) { } }
+      } else if (st.phase === 'cabin1') {
+        const tc = now - st.tc; drawCabin(x, W, H, tc, 1); runLines(st.dlg[1], tc);
+        if (tc > 8800 && !st.al1) { st.al1 = 1; }
+        if (tc > 9400) { st.phase = 'entry'; st.t1 = now; st.cap.classList.remove('show'); clearSub(); caption('ВХІД В АТМОСФЕРУ! Щити не витримують!'); if (RW.A) try { RW.A.sfx('rumble'); } catch (e) { } }
+      } else if (st.phase === 'cabin2') {
+        const tc = now - st.tc; drawCabin(x, W, H, tc, 2); runLines(st.dlg[2], tc);
+        if (tc < 600) { x.fillStyle = 'rgba(255,248,230,' + (1 - tc / 600) + ')'; x.fillRect(0, 0, W, H); }
+        if (tc > 3300) { const f = Math.min(1, (tc - 3300) / 700); x.fillStyle = 'rgba(255,248,230,' + f + ')'; x.fillRect(0, 0, W, H); }
+        if (tc > 4000) { clearSub(); beginFall(); }
       } else {
         const e2 = now - st.t1; const T = 3600; const p = Math.min(1, e2 / T);
         const info = drawSpace(x, W, H, el, 0.45 + p * 0.55);
@@ -150,7 +245,7 @@
         // дим
         if (e2 > 1500 && st.capT !== 'c') { st.capT = 'c'; caption('Корабель втрачає керування…'); }
         if (p > 0.82) { const f = (p - 0.82) / 0.18; x.fillStyle = 'rgba(255,248,230,' + f + ')'; x.fillRect(0, 0, W, H); }
-        if (e2 > T) beginFall();
+        if (e2 > T) { st.phase = 'cabin2'; st.tc = now; st.cap.classList.remove('show'); caption(''); st.cap.classList.remove('show'); if (RW.A) try { RW.A.sfx('rumble'); setTimeout(() => RW.A.sfx('crash'), 1800); } catch (e) { } }
       }
     } else if (st.phase === 'fall') updateFall(now);
     else if (st.phase === 'crash' || st.phase === 'exit') updateGround(now);
