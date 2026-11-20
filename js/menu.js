@@ -60,7 +60,7 @@
   A.showMain = () => M.showMain();
   A.quitGame = () => {
     if (!confirm('Вийти з гри?' + (M.fromGame ? ' Незбережений прогрес буде втрачено.' : ''))) return;
-    try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) { }
+    try { RW.UIExt && RW.UIExt.release(); if (document.fullscreenElement) document.exitFullscreen(); } catch (e) { }
     try { RW.Net && RW.Net.close && RW.Net.close(); } catch (e) { }
     window.close();
     setTimeout(() => { show('<h2>До зустрічі!</h2><p style="text-align:center">Гру зупинено. Тепер можна закрити цю вкладку (Ctrl+W).</p><div class="btnrow"><button class="btn" data-m="showMain">Повернутися в меню</button></div>'); }, 250);
