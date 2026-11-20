@@ -518,11 +518,34 @@
   //  Іконки предметів
   // ---------------------------------------------------------------
   GFX.itemIcons = {};
+  // деталізація іконок: фаски по краях, зерно матеріалу, товстіший контур
+  function detailPass(c, seed) {
+    const W = c.width, H = c.height, x = c.getContext('2d'); const im = x.getImageData(0, 0, W, H), d = im.data;
+    // тверда маска предмета (без м'якої тіні)
+    const mk2 = () => { const m = document.createElement('canvas'); m.width = W; m.height = H; return m; };
+    const mask = mk2(), mx = mask.getContext('2d'); const mi = mx.createImageData(W, H);
+    for (let i = 0; i < W * H; i++) { const solid = d[i * 4 + 3] > 150; mi.data[i * 4 + 3] = solid ? 255 : 0; mi.data[i * 4] = mi.data[i * 4 + 1] = mi.data[i * 4 + 2] = 255; }
+    mx.putImageData(mi, 0, 0);
+    // зерно матеріалу (двооктавний шум)
+    const hs = (a, b) => { let h = (a * 374761393 + b * 668265263 + seed) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; };
+    for (let yy = 0; yy < H; yy++) for (let xx = 0; xx < W; xx++) { const i = (yy * W + xx) * 4; if (mi.data[i + 3] === 0) continue; const n = (hs(xx >> 2, yy >> 2) - 0.5) * 16 + (hs(xx >> 1, yy >> 1) - 0.5) * 12 + (hs(xx, yy) - 0.5) * 6; d[i] = Math.max(0, Math.min(255, d[i] + n)); d[i + 1] = Math.max(0, Math.min(255, d[i + 1] + n)); d[i + 2] = Math.max(0, Math.min(255, d[i + 2] + n)); }
+    x.putImageData(im, 0, 0);
+    const edge = (dx, dy, col) => { const e = mk2(), ex = e.getContext('2d'); ex.drawImage(mask, 0, 0); ex.globalCompositeOperation = 'destination-out'; ex.drawImage(mask, dx, dy); ex.globalCompositeOperation = 'source-in'; ex.fillStyle = col; ex.fillRect(0, 0, W, H); return e; };
+    x.globalCompositeOperation = 'source-atop';
+    x.drawImage(edge(0, 3, 'rgba(255,255,255,0.42)'), 0, 0); x.drawImage(edge(3, 0, 'rgba(255,255,255,0.22)'), 0, 0);
+    x.drawImage(edge(0, -4, 'rgba(0,0,10,0.42)'), 0, 0); x.drawImage(edge(-3, 0, 'rgba(0,0,10,0.28)'), 0, 0);
+    // внутрішня тінь: ще раз тонкий темний край навколо
+    x.drawImage(edge(2, 2, 'rgba(255,255,255,0.12)'), 0, 0); x.drawImage(edge(-2, -2, 'rgba(0,0,0,0.18)'), 0, 0);
+    x.globalCompositeOperation = 'destination-over';
+    const ol = mk2(), ox = ol.getContext('2d'); ox.drawImage(mask, 0, 0); ox.globalCompositeOperation = 'source-in'; ox.fillStyle = 'rgba(14,10,8,0.92)'; ox.fillRect(0, 0, W, H);
+    for (const [ddx, ddy] of [[2, 0], [-2, 0], [0, 2], [0, -2], [1.5, 1.5], [-1.5, 1.5], [1.5, -1.5], [-1.5, -1.5]]) x.drawImage(ol, ddx, ddy);
+    x.globalCompositeOperation = 'source-over';
+  }
   GFX.itemIcon = function (def) {
     if (GFX.itemIcons[def]) return GFX.itemIcons[def];
     const d = D.items[def]; const col = d.color; const rnd = U.rng(U.hashStr(def));
-    const c = mk(64, 64, (x) => {
-      x.scale(2, 2);
+    const c = mk(128, 128, (x) => {
+      x.scale(4, 4);
       const sg = x.createRadialGradient(16, 22, 1, 16, 22, 11); sg.addColorStop(0, 'rgba(0,0,0,0.42)'); sg.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = sg; x.beginPath(); x.ellipse(16, 22.5, 11, 4.6, 0, 0, 6.3); x.fill();
       const rr = (X, Y, w, h, r) => { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); };
       switch (def) {
@@ -571,9 +594,10 @@
       }
     });
     // загальна об'ємність: верхній відблиск і нижня тінь, дрібні блиски
-    { const x = c.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-atop'; const lg = x.createLinearGradient(0, 8, 0, 52); lg.addColorStop(0, 'rgba(255,255,240,0.22)'); lg.addColorStop(0.5, 'rgba(255,255,255,0)'); lg.addColorStop(1, 'rgba(0,0,20,0.28)'); x.fillStyle = lg; x.fillRect(0, 0, 64, 64);
-      x.fillStyle = 'rgba(255,255,255,0.5)'; for (let k = 0; k < 4; k++) x.fillRect(14 + rnd() * 34, 14 + rnd() * 26, 2, 1); x.globalCompositeOperation = 'source-over'; }
-    finish(c, { grain: 0.2, light: 0.1, dark: 0.12 }); GFX.itemIcons[def] = c; return c;
+    { const x = c.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-atop'; const lg = x.createLinearGradient(0, 16, 0, 104); lg.addColorStop(0, 'rgba(255,255,240,0.22)'); lg.addColorStop(0.5, 'rgba(255,255,255,0)'); lg.addColorStop(1, 'rgba(0,0,20,0.28)'); x.fillStyle = lg; x.fillRect(0, 0, 128, 128);
+      x.fillStyle = 'rgba(255,255,255,0.5)'; for (let k = 0; k < 4; k++) x.fillRect(28 + rnd() * 68, 28 + rnd() * 52, 3, 2); x.globalCompositeOperation = 'source-over'; }
+    detailPass(c, U.hashStr(def));
+    GFX.itemIcons[def] = c; return c;
   };
 
   // ---------------------------------------------------------------
