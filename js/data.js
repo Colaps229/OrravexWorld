@@ -398,23 +398,23 @@
   // ---- Сценарії ----
   D.scenarios = [
     {
-      id: 'crash', name: 'Аварійна посадка', desc: 'Три вцілілі зі зруйнованого корабля. Помірне спорядження, але без зброї — її треба змайструвати або знайти.',
-      count: 3, research: [], items: { steel: 220, wood: 220, silver: 700, components: 5, meal_simple: 20, herbal: 6, cloth: 60 },
+      id: 'crash', name: 'Остання шлюпка', desc: 'Три вцілілі з «Зорі-7» вирвались на шлюпці й упали на чужу планету. Є ліки й трохи запчастин, але ні грама зброї — доведеться вигадувати оборону.',
+      count: 3, research: [], items: { steel: 180, wood: 200, silver: 500, components: 8, meal_simple: 24, herbal: 8, medicine: 4, cloth: 50 },
       pet: 'dog', win: true, points: 14
     },
     {
-      id: 'tribe', name: 'Втрачене плем\'я', desc: 'П\'ятеро кочівників без високих технологій. Зброї немає: змайструйте кийки, списи й луки на місці ремесла.',
-      count: 5, research: [], items: { wood: 280, steel: 40, silver: 120, meal_simple: 12, herbal: 3, cloth: 40, tribal_wear: 2 },
+      id: 'tribe', name: 'Діти Попелу', desc: 'Плем\'я, що пережило спалення рідного лісу. П\'ятеро мисливців із двома луками, списами й вірою в вогонь. Жодної електроніки — тільки дерево, шкіри й кмітливість.',
+      count: 5, research: [], items: { wood: 260, steel: 30, silver: 80, meal_simple: 14, herbal: 8, cloth: 30, tribal_wear: 3, bow: 2, spear: 2 },
       pet: 'dog', tribal: true, win: true, points: 10
     },
     {
-      id: 'rich', name: 'Багатий дослідник', desc: 'Один колоніст із запасом техніки та грошей. Складно виживати на самоті.',
-      count: 1, research: ['metalwork', 'electricity'], items: { steel: 400, wood: 150, silver: 2200, components: 14, gold: 40, meal_fine: 12, medicine: 6, cloth: 100, parka: 1, flak_vest: 1 },
-      pet: 'cat', win: true, points: 22
+      id: 'rich', name: 'Картографи Півночі', desc: 'Двоє картографів із дорогим обладнанням: скеля навколо стоянки «прозора» — жили руди в радіусі 16 клітинок видно одразу. Але вдвох важко тримати оборону.',
+      count: 2, research: ['metalwork'], items: { steel: 220, wood: 180, silver: 1100, components: 10, gold: 15, meal_fine: 8, medicine: 4, cloth: 60, parka: 2 },
+      pet: 'cat', win: true, points: 20, reveal: 16
     },
     {
-      id: 'naked', name: 'Голий і вражений', desc: 'Один колоніст. Нічого, крім самого себе. Лише для досвідчених.',
-      count: 1, research: [], items: { meal_simple: 2 }, pet: null, win: true, points: 12
+      id: 'naked', name: 'Самотній вогонь', desc: 'Один колоніст, що вижив сам. У кишенях лише трохи їжі, поліно й вірний пес. Усе — з нуля.',
+      count: 1, research: [], items: { meal_simple: 4, wood: 40, cloth: 10, herbal: 2 }, pet: 'dog', win: true, points: 14
     }
   ];
 

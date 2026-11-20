@@ -111,7 +111,7 @@
     show(`<div class="steps"><b>1. Сценарій</b> › 2. Оповідач › 3. Планета › 4. Колоністи</div><h2>Оберіть початок історії</h2><div class="scencards">${D.scenarios.map(s => `<div class="scard ${c.scenario === s.id ? 'on' : ''}" data-m="pickScen" data-id="${s.id}"><canvas class="scimg" width="400" height="230" data-sid="${s.id}"></canvas><div class="scbody"><h3>${esc(s.name)}</h3><p>${esc(s.desc)}</p><div class="sctags"><span>👥 ${s.count}</span><span>${s.tribal ? '🏹 Примітивні технології' : '⚙ Сучасні технології'}</span>${s.pet ? '<span>' + (s.pet === 'dog' ? '🐕' : '🐈') + ' Улюбленець</span>' : ''}</div></div></div>`).join('')}</div><div class="btnrow">${back('toMain', '← Меню')}<button class="btn big" data-m="step2">Далі →</button></div>`, 'menu-wide');
     setTimeout(() => { document.querySelectorAll('canvas.scimg').forEach(cv => RW.Scenes.draw(cv, cv.dataset.sid)); }, 10);
   };
-  A.pickScen = el => { M.cfg.scenario = el.dataset.id; M.step1(); };
+  A.pickScen = el => { M.cfg.scenario = el.dataset.id; el.parentElement.querySelectorAll('[data-m="pickScen"]').forEach(c => c.classList.toggle('on', c === el)); };
   A.step2 = () => M.step2();
   M.step2 = function () {
     const c = M.cfg;
@@ -119,7 +119,7 @@
       <h4>⚔ Складність</h4><div class="diffrow">${D.difficulties.map(s => `<div class="card ${c.difficulty === s.id ? 'on' : ''}" data-m="pickDiff" data-id="${s.id}"><h3>${esc(s.name)}</h3><p>${esc(s.desc)}</p></div>`).join('')}</div><div class="btnrow"><button class="btn" data-m="step1">← Назад</button><button class="btn big" data-m="step3">Далі →</button></div>`, 'menu-wide');
     setTimeout(() => { document.querySelectorAll('canvas.stport').forEach(cv => RW.Portraits.draw(cv, cv.dataset.sid)); }, 10);
   };
-  A.pickStory = el => { M.cfg.storyteller = el.dataset.id; M.step2(); }; A.pickDiff = el => { M.cfg.difficulty = el.dataset.id; M.step2(); };
+  A.pickStory = el => { M.cfg.storyteller = el.dataset.id; el.parentElement.querySelectorAll('[data-m="pickStory"]').forEach(c => c.classList.toggle('on', c === el)); }; A.pickDiff = el => { M.cfg.difficulty = el.dataset.id; el.parentElement.querySelectorAll('[data-m="pickDiff"]').forEach(c => c.classList.toggle('on', c === el)); };
   A.step3 = () => M.step3();
 
   // ------------------------- Планета -------------------------

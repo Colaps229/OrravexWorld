@@ -9,7 +9,7 @@
   const RW = window.RW, D = RW.D, U = RW.U; const G = () => RW.G;
   const F = RW.Fog = { RIM: 1, DUG: 2, on: true };
   F.seen = function (map, i) {
-    if (!F.on) return true; const w = map.w, h = map.h, x = i % w, y = (i / w) | 0; const R = F.DUG;
+    if (!F.on) return true; const gg = G(); if (gg && gg.scenario && gg.scenario.reveal && gg.home) { const rr = gg.scenario.reveal, dx = (i % map.w) - gg.home.x, dy = ((i / map.w) | 0) - gg.home.y; if (dx * dx + dy * dy < rr * rr) return true; } const w = map.w, h = map.h, x = i % w, y = (i / w) | 0; const R = F.DUG;
     for (let dy = -R; dy <= R; dy++) { const yy = y + dy; if (yy < 0 || yy >= h) continue; for (let dx = -R; dx <= R; dx++) { if (!dx && !dy) continue; const xx = x + dx; if (xx < 0 || xx >= w) continue; const k = yy * w + xx; if (map.blk[k] !== 0) continue; if (Math.abs(dx) <= F.RIM && Math.abs(dy) <= F.RIM) return true; if (map.terrain[k] === 7) return true; } }
     return false;
   };

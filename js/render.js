@@ -500,20 +500,26 @@
   function drawWall(map, b) {
     const x = b.x, y = b.y; let m = 0;
     if (wallLike(map, x, y - 1)) m |= 1; if (wallLike(map, x + 1, y)) m |= 2; if (wallLike(map, x, y + 1)) m |= 4; if (wallLike(map, x - 1, y)) m |= 8;
-    ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.fillRect(x * TS + 2, y * TS + 5, TS, TS);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; for (const r of GFX.wallShape(m)) ctx.fillRect(x * TS + r[0] + 2, y * TS + r[1] + 4, r[2], r[3]);
     ctx.drawImage(GFX.wallSprite(b.key, m), x * TS, y * TS);
-    if (b.hp < b.maxhp * 0.6) { ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x * TS + 6, y * TS + 5); ctx.lineTo(x * TS + 14, y * TS + 14); ctx.lineTo(x * TS + 11, y * TS + 24); ctx.stroke(); }
+    if (b.hp < b.maxhp * 0.6) { ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x * TS + 12, y * TS + 9); ctx.lineTo(x * TS + 16, y * TS + 15); ctx.lineTo(x * TS + 14, y * TS + 22); ctx.stroke(); }
   }
   function drawDoor(map, b) {
-    const x = b.x, y = b.y; const horiz = wallLike(map, x - 1, y) && wallLike(map, x + 1, y);
-    const op = b.door ? Math.min(1, b.door.open / 6) : 0;
-    ctx.drawImage(GFX.wallSprite(b.key === 'door_steel' ? 'wall_steel' : 'wall_wood', 15), x * TS, y * TS);
-    ctx.fillStyle = 'rgba(30,24,16,0.55)'; ctx.fillRect(x * TS + (horiz ? 0 : 7), y * TS + (horiz ? 7 : 0), horiz ? TS : 18, horiz ? 18 : TS);
-    const spr = GFX.doorSprite(b.key, horiz);
-    const sl = op * 20;
+    const x = b.x, y = b.y; const horiz = wallLike(map, x - 1, y) && wallLike(map, x + 1, y) || !(wallLike(map, x, y - 1) && wallLike(map, x, y + 1));
+    const dr = b.door || (b.door = { open: 0 }); const tgt = dr.open > 0 ? 1 : 0; dr.f = (dr.f || 0) + (tgt - (dr.f || 0)) * (tgt ? 0.3 : 0.14); if (Math.abs(dr.f - tgt) < 0.01) dr.f = tgt; const op = dr.f;
+    const wk = b.key === 'door_steel' ? 'wall_steel' : 'wall_wood', m = horiz ? 10 : 5;
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; for (const r of GFX.wallShape(m)) ctx.fillRect(x * TS + r[0] + 2, y * TS + r[1] + 4, r[2], r[3]);
+    ctx.drawImage(GFX.wallSprite(wk, m), x * TS, y * TS);
+    // отвір: підлога в тіні
+    ctx.fillStyle = 'rgba(24,18,12,0.6)'; if (horiz) ctx.fillRect(x * TS + 3, y * TS + 8, TS - 6, 16); else ctx.fillRect(x * TS + 8, y * TS + 3, 16, TS - 6);
+    const spr = GFX.doorSprite(b.key, horiz); const sl = op * 21;
     ctx.save(); ctx.beginPath(); ctx.rect(x * TS, y * TS, TS, TS); ctx.clip();
+    if (op < 0.98) { ctx.fillStyle = 'rgba(0,0,0,' + (0.28 * (1 - op)).toFixed(2) + ')'; if (horiz) ctx.fillRect(x * TS + 1 - sl + 1, y * TS + 12, TS, 14); else ctx.fillRect(x * TS + 12, y * TS + 1 - sl + 1, 14, TS); }
     if (horiz) ctx.drawImage(spr, x * TS - sl, y * TS); else ctx.drawImage(spr, x * TS, y * TS - sl);
     ctx.restore();
+    // стійки рами
+    ctx.fillStyle = b.key === 'door_steel' ? '#4a525a' : '#4a3420'; if (horiz) { ctx.fillRect(x * TS, y * TS + 7, 3, 18); ctx.fillRect(x * TS + TS - 3, y * TS + 7, 3, 18); } else { ctx.fillRect(x * TS + 7, y * TS, 18, 3); ctx.fillRect(x * TS + 7, y * TS + TS - 3, 18, 3); }
+    ctx.fillStyle = 'rgba(255,255,255,0.2)'; if (horiz) { ctx.fillRect(x * TS, y * TS + 7, 3, 1); ctx.fillRect(x * TS + TS - 3, y * TS + 7, 3, 1); } else { ctx.fillRect(x * TS + 7, y * TS, 1, 3); ctx.fillRect(x * TS + 7, y * TS + TS - 3, 1, 3); }
   }
   function drawBuilding(b, g) {
     const spr = GFX.bldSprite(b.key, b.w, b.h); const px = b.x * TS, py = b.y * TS; const d = b.def; const t = R.time;

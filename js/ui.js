@@ -626,7 +626,7 @@
     ctx.lineWidth = 1.6; ctx.strokeStyle = '#ffe08a';
     const brackets = (x, y, w, h) => { const l = 7; ctx.beginPath(); for (const [cx, cy, dx, dy] of [[x, y, 1, 1], [x + w, y, -1, 1], [x, y + h, 1, -1], [x + w, y + h, -1, -1]]) { ctx.moveTo(cx + dx * l, cy); ctx.lineTo(cx, cy); ctx.lineTo(cx, cy + dy * l); } ctx.stroke(); };
     if (s) {
-      if (s.p && g.pawns.includes(s.p)) { ctx.save(); ctx.strokeStyle = 'rgba(255,240,170,0.9)'; ctx.fillStyle = 'rgba(255,240,170,0.12)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.ellipse(s.p.x * TS, s.p.y * TS + 11, 13, 6, 0, 0, 6.3); ctx.fill(); ctx.stroke(); ctx.restore(); ctx.strokeStyle = '#ffe08a'; if (s.p.orderPos) { ctx.strokeStyle = '#7fe08a'; ctx.beginPath(); ctx.arc((s.p.orderPos.x + 0.5) * TS, (s.p.orderPos.y + 0.5) * TS, 7, 0, 6.3); ctx.stroke(); } if (s.p.target && s.p.drafted && !s.p.target.dead) { ctx.strokeStyle = 'rgba(255,90,70,0.8)'; ctx.beginPath(); ctx.moveTo(s.p.x * TS, s.p.y * TS); ctx.lineTo(s.p.target.x * TS, s.p.target.y * TS); ctx.stroke(); } }
+      if (s.p && g.pawns.includes(s.p)) { ctx.strokeStyle = '#ffffff'; if (s.p.orderPos) { ctx.strokeStyle = '#7fe08a'; ctx.beginPath(); ctx.arc((s.p.orderPos.x + 0.5) * TS, (s.p.orderPos.y + 0.5) * TS, 7, 0, 6.3); ctx.stroke(); } if (s.p.target && s.p.drafted && !s.p.target.dead) { ctx.strokeStyle = 'rgba(255,90,70,0.8)'; ctx.beginPath(); ctx.moveTo(s.p.x * TS, s.p.y * TS); ctx.lineTo(s.p.target.x * TS, s.p.target.y * TS); ctx.stroke(); } }
       else if (s.a && !s.a.dead) brackets(s.a.x * TS - 12, s.a.y * TS - 12, 24, 24);
       else if (s.b && !s.b.dead) brackets(s.b.x * TS, s.b.y * TS, s.b.w * TS, s.b.h * TS);
       else if (s.bp && !s.bp.dead) brackets(s.bp.x * TS, s.bp.y * TS, s.bp.w * TS, s.bp.h * TS);

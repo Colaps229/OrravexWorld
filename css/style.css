@@ -26,7 +26,7 @@ input[type=range]{accent-color:var(--gold)}
 #colbar{position:absolute;top:6px;left:6px;display:flex;gap:4px;flex-wrap:wrap;max-width:calc(100% - 290px)}
 .col{width:56px;background:rgba(20,24,29,.9);border:1px solid var(--bd);padding:2px;cursor:pointer;text-align:center;border-radius:2px}
 .col img{width:48px;height:48px;display:block;margin:0 auto;image-rendering:pixelated;background:#222a33}
-.col.sel{border-color:var(--gold);box-shadow:0 0 8px rgba(224,182,74,.5)}.col.drafted{border-color:var(--neg)}.col.downed{opacity:.7;border-color:#c33}.col.mental{border-color:#f66;animation:blink .8s infinite}.col.sleep{filter:brightness(.8)}
+.col.sel{border-color:#fff;box-shadow:0 0 8px rgba(255,255,255,.45)}.col.drafted{border-color:var(--neg)}.col.downed{opacity:.7;border-color:#c33}.col.mental{border-color:#f66;animation:blink .8s infinite}.col.sleep{filter:brightness(.8)}
 .mb{height:4px;background:#111;margin:2px 0}.mb i{display:block;height:100%}.cn{font-size:10px;overflow:hidden;white-space:nowrap}
 @keyframes blink{50%{background:#5a2020}}
 /* тости й листи */

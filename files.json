@@ -1,7 +1,7 @@
 {
- "version": "0.9.13",
- "build": "mwoks1jp",
- "date": "2026-11-20T06:05:33.781Z",
+ "version": "0.9.14",
+ "build": "mwol8nt1",
+ "date": "2026-11-20T06:18:29.125Z",
  "files": [
   "README.md",
   "css/style.css",
@@ -45,6 +45,7 @@
   "js/pawn.js",
   "js/perf.js",
   "js/planet.js",
+  "js/polish.js",
   "js/portraits.js",
   "js/prisoners.js",
   "js/psyche.js",
