@@ -1,7 +1,7 @@
 {
- "version": "0.9.21",
- "build": "mwq84y5g",
- "date": "2026-11-21T09:47:13.252Z",
+ "version": "0.9.22",
+ "build": "mwq8tezs",
+ "date": "2026-11-21T10:06:14.824Z",
  "files": [
   "README.md",
   "css/style.css",
@@ -19,6 +19,7 @@
   "js/cutscene.js",
   "js/data.js",
   "js/disasters.js",
+  "js/dump.js",
   "js/economy.js",
   "js/energy.js",
   "js/events.js",

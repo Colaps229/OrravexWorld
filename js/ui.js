@@ -379,6 +379,7 @@
     } else if (UI.cat === 'zones') {
       h += `<div class="acard ${tt && tt.kind === 'stock' ? 'on' : ''}" data-act="pickZone" data-kind="stock" title="Зона зберігання предметів"><div class="ai">📦</div><div class="an">Склад</div></div>`;
       h += `<div class="acard ${tt && tt.kind === 'grow' ? 'on' : ''}" data-act="pickZone" data-kind="grow" title="Ферма: оберіть культуру — садівники самі сіють і збирають"><div class="ai">🌾</div><div class="an">Ферма</div></div>`;
+      h += `<div class="acard ${tt && tt.kind === 'dump' ? 'on' : ''}" data-act="pickZone" data-kind="dump" title="Смітник: сюди зносять трупи, зіпсовану їжу та вибрані предмети"><div class="ai">🗑</div><div class="an">Смітник</div></div>`;
       h += `<div class="acard ${tt && tt.kind === 'pen' ? 'on' : ''}" data-act="pickZone" data-kind="pen" title="Загін: тварини-худоба тримаються тут"><div class="ai">🐑</div><div class="an">Загін</div></div>`;
       h += `<div class="acard ${tt && tt.type === 'zoneErase' ? 'on' : ''}" data-act="pickZoneErase" title="Видалити клітини зон"><div class="ai">✖</div><div class="an">Видалити клітини</div></div>`;
     } else {
@@ -521,12 +522,14 @@
     return h + '</div>';
   }
   function zonePanel(z) {
-    let h = `<div class="ihead"><div class="it"><b>${z.type === 'stock' ? 'Склад' : z.type === 'pen' ? 'Загін для тварин' : 'Ферма'}</b><div class="sub">${z.cells.size} клітин</div></div><button class="btn" data-act="zoneDel">Видалити зону</button></div><div class="ibody">`;
+    let h = `<div class="ihead"><div class="it"><b>${z.type === 'stock' ? 'Склад' : z.type === 'dump' ? 'Смітник' : z.type === 'pen' ? 'Загін для тварин' : 'Ферма'}</b><div class="sub">${z.cells.size} клітин</div></div><button class="btn" data-act="zoneDel">Видалити зону</button></div><div class="ibody">`;
     if (z.type === 'grow') {
       const g = G(); const crops = Object.keys(D.plants).filter(k => D.plants[k].crop);
       h += `<p>Культура: <select data-chg="zoneCrop">${crops.map(k => { const pd = D.plants[k]; const lk = pd.research && !g.research.done.has(pd.research); return `<option value="${k}" ${z.crop === k ? 'selected' : ''} ${lk ? 'disabled' : ''}>${pd.name}${lk ? ' (🔒)' : ''}</option>`; }).join('')}</select> <label><input type="checkbox" data-chg="zoneSow" ${z.sow ? 'checked' : ''}> Сіяти</label></p>`;
       { const fi = RW.Farming.zoneInfo(z); h += `<p><label><input type="checkbox" data-chg="zoneFert" ${z.fert ? 'checked' : ''}> 🌱 Удобрювати (з запасів: ${g.map.count('fertilizer')})</label> <label><input type="checkbox" data-chg="zoneCull" ${z.cull !== false ? 'checked' : ''}> Вирубувати хворі</label></p><div class="zfill"><div class="zf" style="width:${fi.avg}%"></div></div><div class="sub">Рослин: ${fi.n}/${fi.cells} · середній ріст ${fi.avg}% · готово ${fi.ready}${fi.hydro ? ' · гідропоніка ' + fi.hydro : ''}${fi.fz ? ' · удобрено ' + fi.fz : ''}${fi.pest ? ' · <b class="neg">шкідники ' + fi.pest + '</b>' : ''}</div>`; }
       const cell = z.cells.values().next().value; if (cell != null) { const t = g.map.tempAt(cell, g.outTemp); h += `<p class="sub">Температура: ${U.fmt(t, 0)}°C · ґрунт: ${D.terrain[g.map.terrain[cell]].name} (${Math.round(D.terrain[g.map.terrain[cell]].fert * 100)}%). ${z.crop && D.plants[z.crop].minT > t ? '<b class="neg">Надто холодно для росту</b>' : ''}</p>`; }
+    } else if (z.type === 'dump') {
+      h += UI.dumpPanel(z);
     } else if (z.type === 'pen') {
       h += `<p class="sub">Худоба (вівці, корови, кури) тримається у загоні. Поставте <b>Годівницю</b> (Архітектор → Виробництво) і носіть туди сіно (рецепт на верстаті з рису).</p>`;
     } else {
@@ -582,7 +585,7 @@
     const t = UI.tool;
     if (t.type === 'build') { const d = D.bld[t.def]; return `Будівництво: <b>${esc(d.name)}</b> — ЛКМ розмістити${(d.wall || d.floor || d.conduit || d.cover) ? ' (тягніть для лінії/області)' : ''}, Q/E поворот, ПКМ чи Esc — скасувати`; }
     if (t.type === 'desig') return `Наказ: <b>${{ mine: 'Видобуток', chop: 'Рубка', harvest: 'Збір', hunt: 'Полювання', decon: 'Розібрати', forbid: 'Заборона', allow: 'Дозвіл', cancel: 'Скасувати' }[t.kind]}</b> — тягніть прямокутник, ПКМ чи Esc — скасувати`;
-    if (t.type === 'zone') return `Зона: <b>${t.kind === 'stock' ? 'Склад' : 'Вирощування'}</b> — тягніть прямокутник, ПКМ чи Esc — скасувати`;
+    if (t.type === 'zone') return `Зона: <b>${t.kind === 'stock' ? 'Склад' : t.kind === 'dump' ? 'Смітник' : 'Вирощування'}</b> — тягніть прямокутник, ПКМ чи Esc — скасувати`;
     return 'Видалення клітин зон — тягніть прямокутник';
   }
 

@@ -378,13 +378,13 @@
           if (it.forbid || it.res || it.dead) continue;
           const d0 = D.items[it.def];
           if (d0.cat === 'corpse') continue;
-          const z0 = map.zoneAt[i];
+          const z0 = map.zoneAt[i]; if (z0 && z0.type === 'dump') continue; if ((it.bad || 0) > g.tick) continue;
           let pz = zones; if (z0 && z0.type === 'stock' && z0.accepts(it.def)) { pz = zones.filter(z => (z.priority || 0) > (z0.priority || 0)); if (!pz.length) continue; }
           if (map.bp[i] && false) continue;
           const x = i % map.w, y = (i / map.w) | 0; const d0m = manh(p.tx, p.ty, x, y);
           // терміновість: їжа, що псується, переноситься першою; ще швидше — якщо лежить просто неба
           const urg = (d0.rot ? (map.isRoofed(i) ? 28 : 46) : 0);
-          if (d0m - urg - 24 >= bd || d0m > 80) continue;
+          if (d0m - urg - 24 >= bd || d0m > 400) continue;
           if (!reachTile(p, i)) continue;
           const dc = findStockCell(p, it, pz); if (dc == null) continue;
           const zp = map.zoneAt[dc] ? (map.zoneAt[dc].priority == null ? 2 : map.zoneAt[dc].priority) : 2;
@@ -436,7 +436,9 @@
   function findWork(p) {
     const order = D.workTypes.map((w, idx) => ({ w, idx, pr: p.work[w.id] || 0 })).filter(o => o.pr > 0 && p.canDo(o.w.id));
     order.sort((a, b) => a.pr - b.pr || a.idx - b.idx);
+    const tk = G().tick;
     for (const o of order) {
+      if (p.wcool && p.wcool[o.w.id] > tk) continue;
       const gv = GIVERS[o.w.id]; if (!gv) continue;
       const j = gv(p); if (j) { j.wt = o.w.id; return j; }
     }
@@ -686,7 +688,7 @@
     const g = G(), map = g.map; const it = j.item;
     if (j.stage === 0) {
       if (!it || it.dead) return FAIL;
-      const r = moveTo(p, it.i % map.w, (it.i / map.w) | 0); if (r === 'fail') return FAIL;
+      const r = moveTo(p, it.i % map.w, (it.i / map.w) | 0); if (r === 'fail') { it.bad = g.tick + 900; return FAIL; }
       if (r === 'arrived') {
         const cap = D.items[it.def].stack >= 50 ? 60 : D.items[it.def].stack; const def = it.def; const got = map.takeItem(it, Math.min(it.n, cap));
         giveCarry(p, def, got); j.stage = 1; resetMove(p);
@@ -1017,7 +1019,7 @@
     if (r === DONE) { endJob(p); }
     else if (r === FAIL) {
       // Забороняємо повторення негайно
-      p.failT = G().tick; endJob(p);
+      p.failT = G().tick; if (j.wt) (p.wcool || (p.wcool = {}))[j.wt] = G().tick + 120; endJob(p);
     }
   };
 

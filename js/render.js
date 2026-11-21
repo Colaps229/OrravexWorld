@@ -260,7 +260,7 @@
   //  Основне малювання
   // ---------------------------------------------------------------
   const WSTY = [[], []]; for (let q = 0; q < 8; q++) { const a = (q + 0.5) / 8; WSTY[0].push('rgba(140,200,240,' + (0.05 + a * 0.1).toFixed(3) + ')'); WSTY[1].push('rgba(255,255,255,' + (0.04 + a * 0.08).toFixed(3) + ')'); }
-  const ZONE_COL = { stock: '#d8a040', grow: '#4aa84a', pen: '#c88a5a' };
+  const ZONE_COL = { stock: '#d8a040', grow: '#4aa84a', pen: '#c88a5a', dump: '#9a8a7a' };
   const ENTS = [], SEEN = new Set();
   R.dbgInfo = function () { return { chunksCached: chunks.size, particles: parts.length, floatTexts: texts.length, rings: rings.length, lite: !!R.lite, groundCache: !!gc, canvasPx: canvas ? canvas.width + 'x' + canvas.height : '', zoom: +R.cam.zoom.toFixed(2) }; };
   R.draw = function () { const t0 = performance.now(); drawFrame(); R.drawMs += (performance.now() - t0 - R.drawMs) * 0.25; };
