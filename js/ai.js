@@ -437,10 +437,15 @@
     const order = D.workTypes.map((w, idx) => ({ w, idx, pr: p.work[w.id] || 0 })).filter(o => o.pr > 0 && p.canDo(o.w.id));
     order.sort((a, b) => a.pr - b.pr || a.idx - b.idx);
     const tk = G().tick;
+    // захист від «голодування» перенесення: якщо давно не носили, а є що — носимо навіть при низькому пріоритеті
+    if (p.work.haul > 0 && p.canDo('haul') && tk - (p.lastHaul || 0) > 900 && !(p.wcool && p.wcool.haul > tk)) {
+      const hj = GIVERS.haul(p); p.lastHaul = hj ? tk : tk - 600;
+      if (hj) { hj.wt = 'haul'; return hj; }
+    }
     for (const o of order) {
       if (p.wcool && p.wcool[o.w.id] > tk) continue;
       const gv = GIVERS[o.w.id]; if (!gv) continue;
-      const j = gv(p); if (j) { j.wt = o.w.id; return j; }
+      const j = gv(p); if (j) { j.wt = o.w.id; if (o.w.id === 'haul') p.lastHaul = tk; return j; }
     }
     return null;
   }

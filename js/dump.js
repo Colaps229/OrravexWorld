@@ -76,9 +76,8 @@
 
   const gh = AI.GIVERS.haul;
   AI.GIVERS.haul = function (p) {
-    const j0 = dumpJob(p, false); if (j0) return j0;
-    const j = gh.apply(this, arguments); if (j) return j;
-    return dumpJob(p, true);
+    const j0 = dumpJob(p, true); if (j0) return j0;
+    return gh.apply(this, arguments);
   };
   const lt = RW.Life.tick; RW.Life.tick = function (g) { const r = lt.apply(this, arguments); try { if ((g.tick % 90) === 11) syncCost(g); } catch (e) { console.error('dump', e); } return r; };
 
