@@ -159,8 +159,12 @@
       if (this.ill.find(x => x.id === id)) return;
       this.ill.push({ id, sev: sev == null ? 0.05 : sev, imm: 0, tend: 0, tendLeft: 0 });
       const d = D.illnesses[id];
-      if (this.isColonist && RW.UI) RW.UI.letter('Хвороба', U.shortName(this) + ' захворів: ' + d.l + '.', 'warn', this);
-      this.addLog('Захворів: ' + d.l);
+      let quiet = false;
+      if (d.env) { const g = RW.G, t = g ? g.tick : 0, n = this._envNote || (this._envNote = {}); if (n[id] != null && t - n[id] < 3 * D.DAY) quiet = true; else n[id] = t; }
+      if (!quiet) {
+        if (this.isColonist && RW.UI) RW.UI.letter('Хвороба', U.shortName(this) + ' захворів: ' + d.l + '.', 'warn', this);
+        this.addLog('Захворів: ' + d.l);
+      }
     }
     updateCap() {
       let pain = 0, bleed = 0;
