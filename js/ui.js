@@ -226,7 +226,7 @@
       h += `<tr><td class="nm" data-act="selPawn" data-id="${p.id}">${esc(U.shortName(p))}</td>`;
       for (const w of D.workTypes) {
         const ok = p.canDo(w.id); const v = p.work[w.id] || 0; const sk = w.skill ? p.skillLvl(w.skill) : '';
-        h += ok ? `<td><div class="wcell p${v}" data-act="pawnWork" data-ctx="pawnWorkDec" data-p="${p.id}" data-w="${w.id}" title="${w.name}${sk !== '' ? ' (рівень ' + sk + ')' : ''}">${v || '—'}${sk !== '' ? '<small>' + sk + '</small>' : ''}</div></td>` : '<td><div class="wcell dis" title="Заборонено біографією">✕</div></td>';
+        h += ok ? `<td><div class="wcell p${v}" data-act="pawnWork" data-ctx="pawnWorkDec" data-p="${p.id}" data-w="${w.id}" title="${w.name} — 1 = найвищий пріоритет, 4 = найнижчий, — = вимкнено${sk !== '' ? ' (рівень ' + sk + ')' : ''}">${v || '—'}${sk !== '' ? '<small>' + sk + '</small>' : ''}</div></td>` : '<td><div class="wcell dis" title="Заборонено біографією">✕</div></td>';
       }
       h += '</tr>';
     }

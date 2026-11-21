@@ -81,7 +81,13 @@
       if (near) b.door.open = Math.max(b.door.open || 0, 24);
     }
   }
-  const lt = RW.Life.tick; RW.Life.tick = function (g) { const r = lt.apply(this, arguments); try { doorTick(g); relocate(g); } catch (e) { console.error('polish', e); } return r; };
+  // чистка «осиротілих» резервувань: клітини складу/предмети, зайняті ніким, блокують перенесення
+  function sweepRes(g) {
+    const live = new Map(); for (const p of g.pawns) { if (p.faction !== 'colony' || p.dead) continue; live.set(p.id, p); }
+    if (g.tileRes) for (const [i, id] of Array.from(g.tileRes)) { const p = live.get(id); if (!p || !p.job || !p.resTiles || p.resTiles.indexOf(i) < 0) g.tileRes.delete(i); }
+    for (const arr of g.map.items.values()) for (const it of arr) { if (it.res == null) continue; const p = live.get(it.res); if (!p || !p.job) it.res = null; }
+  }
+  const lt = RW.Life.tick; RW.Life.tick = function (g) { const r = lt.apply(this, arguments); try { doorTick(g); relocate(g); if ((g.tick % 240) === 7) sweepRes(g); } catch (e) { console.error('polish', e); } return r; };
 
   // ---- торгова ятка ----
   const free = (map, x, y) => { if (!map.inb(x, y)) return false; const i = y * map.w + x; return !map.blk[i] && !map.bld[i] && !map.bp[i] && map.cost[i] > 0 && map.room[i] < 0 && (!map.zone || true); };

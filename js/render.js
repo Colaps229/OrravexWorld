@@ -725,7 +725,7 @@
       ctx.fillStyle = 'rgba(255,255,255,0.8)';
       for (const d of drops) { d.y += d.v; d.p += 0.03; d.x += Math.sin(d.p) * 0.6 - 0.2; if (d.y > H) { d.y = -5; d.x = Math.random() * W; } ctx.fillRect(d.x, d.y, 2, 2); }
       ctx.fillStyle = 'rgba(220,230,245,0.08)'; ctx.fillRect(0, 0, W, H);
-    } else { drops.length = 0; if (wt === 'fog') { ctx.fillStyle = 'rgba(210,220,230,0.28)'; ctx.fillRect(0, 0, W, H); } }
+    } else { drops.length = 0; if (wt === 'fog') { ctx.fillStyle = 'rgba(210,220,230,0.07)'; ctx.fillRect(0, 0, W, H); } }
   }
 
   // Фокус камери
