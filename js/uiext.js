@@ -24,10 +24,10 @@
   X.release = () => { want = false; pending = false; };
   const reenter = () => { const el = document.documentElement; try { (el.requestFullscreen({ navigationUI: 'hide' }) || Promise.resolve()).then(() => { pending = false; lockEsc(); }).catch(() => { pending = true; }); } catch (e) { pending = true; } };
   document.addEventListener('fullscreenchange', () => {
-    if (!document.fullscreenElement && want && !NAT) { try { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true })); } catch (e) { } reenter(); }
+    if (!document.fullscreenElement && want && !NAT) { const ae = document.activeElement; if (ae && /^(INPUT|TEXTAREA)$/.test(ae.tagName)) return; try { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true })); } catch (e) { } reenter(); }
   });
-  const gesture = () => { if (pending && want && !document.fullscreenElement) { pending = false; reenter(); } };
-  document.addEventListener('pointerdown', gesture, true); document.addEventListener('keydown', gesture, true);
+  const gesture = e => { if (e && e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName || '')) return; if (e && e.type === 'keydown') return; if (pending && want && !document.fullscreenElement) { pending = false; reenter(); } };
+  document.addEventListener('pointerdown', gesture, true);
   const lockEsc = () => { try { if (navigator.keyboard && navigator.keyboard.lock) navigator.keyboard.lock(['Escape']).catch(() => {}); } catch (e) { } };
   document.addEventListener('fullscreenchange', () => { if (X.isFs()) lockEsc(); const b = document.getElementById('fsbtn'); if (b) b.textContent = X.isFs() ? '🗗' : '⛶'; if (!X.isFs() && navigator.keyboard && navigator.keyboard.unlock) navigator.keyboard.unlock(); });
   window.addEventListener('load', () => {

@@ -71,7 +71,7 @@
     cv.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;'; resize();
     window.addEventListener('resize', resize);
     dom.querySelector('#cs-skip').onclick = skip;
-    st.keyH = e => { if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); skip(); } };
+    st.keyH = e => { if (!st || (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName || ''))) return; if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); skip(); } };
     window.addEventListener('keydown', st.keyH, true);
     document.getElementById('ui') && document.getElementById('ui').classList.add('hidden');
     caption('Ви довго летіли крізь темряву… Попереду — невідома планета «' + (g.planetName || 'Новий світ') + '».');
