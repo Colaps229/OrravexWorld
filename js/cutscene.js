@@ -319,7 +319,7 @@
       R.cam.x = st.wp[0] + 2.8; R.cam.y = st.wp[1] + 3.2; R.cam.zoom = 1.4;
     }
     // вантаж
-    let li = 0; for (const k of st.lootList) { const s = st.spots[(li + 3) % st.spots.length]; li++; const sx = s[0] + (li % 2 ? 2 : -2), sy = s[1] + 1; try { map.addItem(k, g.scenario.items[k], sx, sy, { forbid: true }); } catch (e) { } R.fx.dust(sx + 0.5, sy + 0.5, 4); }
+    let li = 0; for (const k of st.lootList) { const s = st.spots[(li + 3) % st.spots.length]; li++; const sx = s[0] + (li % 2 ? 2 : -2), sy = s[1] + 1; try { map.addItem(k, g.scenario.items[k], sx, sy); } catch (e) { } R.fx.dust(sx + 0.5, sy + 0.5, 4); }
     window.removeEventListener('keydown', st.keyH, true); window.removeEventListener('resize', resize);
     const dom = st.dom, cb = st.onDone; R.cutDraw = null; st = null;
     dom.classList.add('out'); setTimeout(() => dom.remove(), 700);

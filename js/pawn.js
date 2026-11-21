@@ -291,14 +291,14 @@
       const ins = this.equip.apparel && D.items[this.equip.apparel] ? D.items[this.equip.apparel].ap.insul : 0;
       const baseIns = this.faction === 'enemy' ? 4 : 0;
       const minC = 14 - ins - baseIns, maxC = 30;
-      const minSafe = minC - 14, maxSafe = 42;
+      const minSafe = minC - 24, maxSafe = 42;
       const env = this.env || (this.env = {});
       env.temp = temp; env.cold = temp < minC ? minC - temp : 0; env.hot = temp > maxC ? temp - maxC : 0;
       const hy = this.ill.find(x => x.id === 'hypothermia'), hs = this.ill.find(x => x.id === 'heatstroke');
       if (temp < minSafe) {
-        const rate = (minSafe - temp) / 40 * 0.00022;
-        if (!hy) this.addIllness('hypothermia', rate * 200); else hy.sev += rate;
-      } else if (hy) { hy.sev -= 0.0004; if (hy.sev <= 0) this.ill = this.ill.filter(x => x !== hy); }
+        const rate = (minSafe - temp) / 40 * 0.00009;
+        if (!hy) this.addIllness('hypothermia', rate * 100); else hy.sev += rate;
+      } else if (hy) { hy.sev -= 0.0008; if (hy.sev <= 0) this.ill = this.ill.filter(x => x !== hy); }
       if (temp > maxSafe) {
         const rate = (temp - maxSafe) / 20 * 0.00022;
         if (!hs) this.addIllness('heatstroke', rate * 200); else hs.sev += rate;

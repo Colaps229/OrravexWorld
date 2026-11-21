@@ -175,6 +175,23 @@
     GFX.terr[0] = [0, 1].map(v => groundTile('#1b3d5d', { low: 16, mid: 10, fine: 3, warm: 6, contour: { thr: 0.045, amt: 16 } }, seedBase + 900 + v));
     GFX.terr[1] = [0, 1].map(v => groundTile('#3f8aa4', { low: 20, mid: 12, fine: 4, warm: 10, contour: { thr: 0.05, amt: 24 } }, seedBase + 950 + v));
     for (const k of [0, 1]) for (const c of GFX.terr[k]) { const x = c.getContext('2d'); if (k === 1) { for (let q = 0; q < 12; q++) { x.fillStyle = 'rgba(214,194,140,0.22)'; x.beginPath(); x.arc(rnd() * TS, rnd() * TS, 1 + rnd() * 2, 0, 6.3); x.fill(); } } for (let q = 0; q < 6; q++) { x.fillStyle = 'rgba(255,255,255,0.1)'; x.fillRect(rnd() * TS, rnd() * TS, 3 + rnd() * 4, 1); } }
+    // вода: хвилі-брижі (безшовно, з обгортанням), блики і глибинні плями
+    [0, 1].forEach(k => GFX.terr[k].forEach((c, vi) => {
+      const x = c.getContext('2d'), wr = U.rng(seedBase + 7000 + k * 31 + vi * 13);
+      const deep = k === 0;
+      for (let q = 0; q < (deep ? 7 : 9); q++) {
+        const bx = wr() * TS, by = wr() * TS, len = 7 + wr() * 9, amp = 1 + wr() * 1.4, ph = wr() * 6.3, hi = wr() < 0.6;
+        x.lineCap = 'round'; x.lineWidth = hi ? 1.1 : 1.6;
+        x.strokeStyle = hi ? (deep ? 'rgba(150,200,240,0.28)' : 'rgba(225,246,255,0.42)') : (deep ? 'rgba(4,14,34,0.30)' : 'rgba(18,70,100,0.26)');
+        for (const ox of [-TS, 0, TS]) for (const oy of [-TS, 0, TS]) {
+          x.beginPath();
+          for (let t = 0; t <= 1.001; t += 0.1) { const px = bx + ox + (t - 0.5) * len * 2, py = by + oy + Math.sin(t * 6.3 + ph) * amp; if (t === 0) x.moveTo(px, py); else x.lineTo(px, py); }
+          x.stroke();
+        }
+      }
+      // сонячні іскри
+      for (let q = 0; q < (deep ? 3 : 6); q++) { const px = wr() * TS, py = wr() * TS; x.fillStyle = 'rgba(255,255,255,' + (deep ? 0.3 : 0.55) + ')'; x.fillRect(Math.floor(px), Math.floor(py), 1.4, 1.4); x.fillStyle = 'rgba(255,255,255,0.18)'; x.fillRect(Math.floor(px) - 1, Math.floor(py), 3.4, 1); }
+    }));
     GFX.terrAvg[0] = '#1b3d5d'; GFX.terrAvg[1] = '#3f8aa4';
     // скеля: шари, тріщини, вкраплення
     GFX.rockTex = [];

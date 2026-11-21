@@ -226,13 +226,18 @@
   function newPawn(sc, i) {
     const p = RW.Pawn.generate({ faction: 'colony', tribal: sc.tribal }); p.pool = sc.points; p.base = JSON.parse(JSON.stringify(p.skills)); return p;
   }
+  M.skHtml = function (p) {
+    let sk = ''; for (const s of D.skills) { const o = p.skills[s]; sk += `<div class="sk"><span>${D.skillIco[s] || ''} ${D.skillNames[s]}</span><button class="btn xs" data-m="skMinus" data-s="${s}">−</button><div class="nbar"><i style="width:${o.lvl / 20 * 100}%;background:${o.pas ? '#d9a53b' : '#7a8a9a'}"></i></div><b>${o.lvl}</b><button class="btn xs" data-m="skPlus" data-s="${s}">+</button><button class="btn xs ${o.pas ? 'on' : ''}" data-m="pas" data-s="${s}" title="Пристрасть: швидший розвиток навички і бонус настрою">${['○', '🔥', '🔥🔥'][o.pas]}</button></div>`; }
+    return sk;
+  };
+  M.skRefresh = function () { const p = M.cfg.colonists[M.ci], box = $('skl'); if (!box) return M.step4(); box.innerHTML = M.skHtml(p); const pl = $('pool'); if (pl) pl.textContent = p.pool; };
   M.step4 = function () {
     const c = M.cfg; const p = c.colonists[M.ci]; const sc = D.scenarios.find(s => s.id === c.scenario);
     const tabs = c.colonists.map((q, i) => `<button class="tab ${i === M.ci ? 'on' : ''}" data-m="selCol" data-i="${i}">${esc(q.name.nick)}</button>`).join('');
     const opt = (arr, cur, f) => arr.map(a => `<option value="${a.id}" ${a.id === cur ? 'selected' : ''}>${f(a)}</option>`).join('');
     const sw = (arr, cur, key) => arr.map(v => `<i class="sw ${v === cur ? 'on' : ''}" style="background:${v}" data-m="look" data-k="${key}" data-v="${v}"></i>`).join('');
     const cb = D.backstories.child.find(b => b.id === p.bio.child), ab = D.backstories.adult.find(b => b.id === p.bio.adult);
-    let sk = ''; for (const s of D.skills) { const o = p.skills[s]; sk += `<div class="sk"><span>${D.skillIco[s] || ''} ${D.skillNames[s]}</span><button class="btn xs" data-m="skMinus" data-s="${s}">−</button><div class="nbar"><i style="width:${o.lvl / 20 * 100}%;background:${o.pas ? '#d9a53b' : '#7a8a9a'}"></i></div><b>${o.lvl}</b><button class="btn xs" data-m="skPlus" data-s="${s}">+</button><button class="btn xs ${o.pas ? 'on' : ''}" data-m="pas" data-s="${s}" title="Пристрасть: швидший розвиток навички і бонус настрою">${['○', '🔥', '🔥🔥'][o.pas]}</button></div>`; }
+    const sk = M.skHtml(p);
     show(`<div class="steps">1. Сценарій › 2. Оповідач › 3. Планета › <b>4. Колоністи</b></div><div class="tabs">${tabs}<button class="btn xs" data-m="rerollAll">🎲 Усі</button></div>
       <div class="creator"><div class="cl"><canvas id="cport" width="140" height="170"></canvas><div class="btnrow"><button class="btn" data-m="reroll">🎲 Випадково</button></div></div>
       <div class="cm"><label class="srow">Ім'я<input type="text" value="${esc(p.name.first)}" data-mc="nFirst"></label><label class="srow">Позивний<input type="text" value="${esc(p.name.nick)}" data-mc="nNick"></label><label class="srow">Прізвище<input type="text" value="${esc(p.name.last)}" data-mc="nLast"></label>
@@ -242,7 +247,7 @@
       <h4>📜 Біографія</h4><label class="srow">Дитинство<select data-mc="bioChild">${opt(D.backstories.child, p.bio.child, b => esc(b.title))}</select></label><p class="sub">${esc(cb.desc)}</p><label class="srow">Доросле життя<select data-mc="bioAdult">${opt(D.backstories.adult, p.bio.adult, b => esc(b.title))}</select></label><p class="sub">${esc(ab.desc)}</p>
       ${p.disabled.length || p.noViolence ? '<p class="neg">Не вміє: ' + [].concat(p.noViolence ? ['насильство'] : [], p.disabled.map(w => (D.workTypes.find(x => x.id === w) || {}).name)).join(', ') + '</p>' : ''}</div>
       <div class="cr"><h4>🧬 Риси</h4><div>${p.traits.map(t => `<span class="chip" title="${esc(D.traitById[t].desc)}">${esc(D.traitById[t].name)} <a data-m="delTrait" data-t="${t}">✕</a></span>`).join('')}</div>${p.traits.length < 3 ? `<select data-mc="addTrait"><option value="">+ Додати рису…</option>${D.traits.filter(t => !p.traits.includes(t.id) && !p.traits.some(x => D.traitById[x].excl === t.excl)).map(t => `<option value="${t.id}">${esc(t.name)} — ${esc(t.desc)}</option>`).join('')}</select>` : ''}
-      <h4>Навички <small>(очки: <b id="pool">${p.pool}</b>)</small></h4>${sk}</div></div>
+      <h4>Навички <small>(очки: <b id="pool">${p.pool}</b>)</small></h4><div id="skl">${sk}</div></div></div>
       ${M.mp ? `<label class="srow">🏠 Назва вашої колонії<input type="text" maxlength="28" value="${esc(M.mp.colony)}" data-mc="colName"></label>` : ''}<div class="btnrow"><button class="btn" data-m="step3">← Назад</button><button class="btn big" data-m="begin">${M.mp ? '🌐 Готово!' : 'Висадитись!'}</button></div>`, 'menu-wide');
     setTimeout(() => { const cv = $('cport'); if (!cv) return; const x = cv.getContext('2d'); x.clearRect(0, 0, 140, 170); x.fillStyle = '#1a2230'; x.fillRect(0, 0, 140, 170); const pc = GFX.portrait(p, 128); x.drawImage(pc, 6, 10); }, 10);
   };
@@ -258,9 +263,9 @@
   A.bioChild = el => { const p = cur(); p.bio.child = el.value; rebio(p); M.step4(); }; A.bioAdult = el => { const p = cur(); p.bio.adult = el.value; rebio(p); M.step4(); };
   A.delTrait = el => { const p = cur(); p.traits = p.traits.filter(t => t !== el.dataset.t); M.step4(); };
   A.addTrait = el => { if (!el.value) return; const p = cur(); if (p.traits.length < 3) p.traits.push(el.value); M.step4(); };
-  A.skPlus = el => { const p = cur(), s = p.skills[el.dataset.s]; if (p.pool > 0 && s.lvl < 20) { s.lvl++; p.pool--; M.step4(); } };
-  A.skMinus = el => { const p = cur(), s = p.skills[el.dataset.s]; const base = p.base ? p.base[el.dataset.s].lvl : 0; if (s.lvl > 0 && s.lvl > Math.min(base, 0) && s.lvl > base - 3) { s.lvl--; p.pool++; M.step4(); } };
-  A.pas = el => { const p = cur(), s = p.skills[el.dataset.s]; const n = (s.pas + 1) % 3; const cost = (n - s.pas) * 4; if (cost > 0 && p.pool < cost) return; p.pool -= cost; s.pas = n; M.step4(); };
+  A.skPlus = el => { const p = cur(), s = p.skills[el.dataset.s]; if (p.pool > 0 && s.lvl < 20) { s.lvl++; p.pool--; M.skRefresh(); } };
+  A.skMinus = el => { const p = cur(), s = p.skills[el.dataset.s]; const base = p.base ? p.base[el.dataset.s].lvl : 0; if (s.lvl > 0 && s.lvl > Math.min(base, 0) && s.lvl > base - 3) { s.lvl--; p.pool++; M.skRefresh(); } };
+  A.pas = el => { const p = cur(), s = p.skills[el.dataset.s]; const n = (s.pas + 1) % 3; const cost = (n - s.pas) * 4; if (cost > 0 && p.pool < cost) return; p.pool -= cost; s.pas = n; M.skRefresh(); };
   M.startCfg = () => { const c = M.cfg; return { planet: planet.name, planetSeed: c.planetSeed, loc: { lat: c.loc.lat, lon: c.loc.lon }, tempBias: c.tempBias, scenario: c.scenario, difficulty: c.difficulty, storyteller: c.storyteller, seed: c.seed, biome: c.biome, size: c.size, mountain: c.mountain, water: c.water, trees: c.trees, colonists: c.colonists.map(p => ({ name: p.name, gender: p.gender, age: p.age, bio: p.bio, look: p.look, traits: p.traits, skills: p.skills })) }; };
   A.begin = () => {
     const c = M.cfg; if (!c.colonists.length) return;
