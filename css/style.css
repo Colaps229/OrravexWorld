@@ -30,7 +30,7 @@ input[type=range]{accent-color:var(--gold)}
 .mb{height:4px;background:#111;margin:2px 0}.mb i{display:block;height:100%}.cn{font-size:10px;overflow:hidden;white-space:nowrap}
 @keyframes blink{50%{background:#5a2020}}
 /* тости й листи */
-#toasts{position:absolute;bottom:92px;left:10px;display:flex;flex-direction:column;gap:4px;max-width:420px;pointer-events:none}
+#toasts{position:absolute;bottom:92px;left:112px;display:flex;flex-direction:column;gap:4px;max-width:420px;pointer-events:none}
 .toast{padding:5px 10px;background:rgba(20,24,29,.92);border-left:4px solid var(--sub);transition:opacity .8s;pointer-events:none}.toast.good{border-color:var(--pos)}.toast.bad{border-color:var(--neg)}.toast.fade{opacity:0}
 .hintcard{pointer-events:auto;background:#2b3a2a;border:1px solid #5a8a50;padding:8px 10px;display:flex;gap:10px;align-items:center}
 #letters{position:absolute;right:6px;top:260px;display:flex;flex-direction:column;gap:4px}

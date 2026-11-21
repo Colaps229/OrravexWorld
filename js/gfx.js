@@ -179,7 +179,7 @@
     [0, 1].forEach(k => GFX.terr[k].forEach((c, vi) => {
       const x = c.getContext('2d'), wr = U.rng(seedBase + 7000 + k * 31 + vi * 13);
       const deep = k === 0;
-      for (let q = 0; q < (deep ? 7 : 9); q++) {
+      for (let q = 0; q < (deep ? 4 : 5); q++) {
         const bx = wr() * TS, by = wr() * TS, len = 7 + wr() * 9, amp = 1 + wr() * 1.4, ph = wr() * 6.3, hi = wr() < 0.6;
         x.lineCap = 'round'; x.lineWidth = hi ? 1.1 : 1.6;
         x.strokeStyle = hi ? (deep ? 'rgba(150,200,240,0.28)' : 'rgba(225,246,255,0.42)') : (deep ? 'rgba(4,14,34,0.30)' : 'rgba(18,70,100,0.26)');

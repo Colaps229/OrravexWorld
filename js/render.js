@@ -67,7 +67,7 @@
       for (const [dx, dy, side] of nbs) {
         const nx = mx + dx, ny = my + dy; if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
         const ni = ny * w + nx; if (map.blk[ni] > 0) continue; const nt = map.terrain[ni]; if (nt === t) continue;
-        if (t <= 1 && nt <= 1) continue;
+        if (t <= 1 && nt <= 1) { edgeBlend(x, px, py, side, GFX.terrAvg[nt], 12, 0.5); continue; }
         if (RANK[nt] > rk && !(t <= 1)) { blobEdge(x, mx, my, px, py, side, nt, v); edgeBlend(x, px, py, side, GFX.terrAvg[nt], 5, 0.3); }
         else if (t <= 1 && nt > 1) { // піна біля берега
           x.fillStyle = t === 0 ? 'rgba(120,170,200,0.32)' : 'rgba(255,255,255,0.28)';
