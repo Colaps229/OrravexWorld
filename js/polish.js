@@ -102,3 +102,21 @@
   const et = RW.Events && RW.Events.trader; if (et) RW.Events.trader = function () { const r = et.apply(this, arguments); try { const g = G(); g.tick = g.tick - (g.tick % 90) + 11; relocate(g); } catch (e) { } return r; };
   RW.Polish = { relocate, areaFree };
 })();
+
+// v0.9.21: рубання дерев доступне й тим, у кого ввімкнено «Видобуток» (раніше — лише «Рослинництво»)
+(function () {
+  const RW = window.RW, AI = RW.AI; if (!AI || !AI.GIVERS || !AI.GIVERS.mine) return;
+  const orig = AI.GIVERS.mine;
+  AI.GIVERS.mine = function (p) {
+    const j = orig.apply(this, arguments); if (j) return j;
+    const g = RW.G, map = g.map; let best = null, bd = 1e9;
+    for (const [i, t] of map.desig) {
+      if (t !== 'chop') continue; const r = g.tileRes.get(i); if (r != null && r !== p.id) continue;
+      if (!map.plant[i]) continue; const x = i % map.w, y = (i / map.w) | 0; const d = Math.abs(p.tx - x) + Math.abs(p.ty - y);
+      if (d < bd && map.reachable(p.tx, p.ty, x, y, true)) { bd = d; best = i; }
+    }
+    if (best == null) return null;
+    g.tileRes.set(best, p.id); (p.resTiles || (p.resTiles = [])).push(best);
+    return { type: 'chop', i: best };
+  };
+})();
